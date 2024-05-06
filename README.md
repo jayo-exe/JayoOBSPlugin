@@ -1,4 +1,4 @@
-# Jayo's Crowd Control Plugin for VNyan
+# Jayo's OBS Plugin for VNyan
 
 A VNyan Plugin that allows you to connect to OBS over the OBS WEbsocket API and use VNyan Parameters to control OBS through your VNyan node graphs. Change scenes, enable/disable Sources and Filters, mute and unmute Audio inputs, and more!
 
