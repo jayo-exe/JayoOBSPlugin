@@ -12,11 +12,23 @@ namespace JayoOBSPlugin
 
         public void Awake()
         {
-            //Find the first(only) event in the TriggerSystem and hook our handler into it
-            EventInfo triggerEvent = typeof(TriggerSystem).GetEvents(BindingFlags.Public | BindingFlags.Static).FirstOrDefault();
-            MethodInfo handlerMethod = typeof(VNyanTriggerListener).GetMethod("HandleTrigger");
-            Delegate triggerDelegate = Delegate.CreateDelegate(triggerEvent.EventHandlerType, this, handlerMethod);
-            triggerEvent.AddEventHandler(TriggerSystem.getInstance(), triggerDelegate);
+            try
+            {
+                if (Type.GetType("TriggerSystem, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null") == null)
+                {
+                    Debug.Log($"Trigger Listener unavailable");
+                    return;
+                }
+                //Find the first(only) event in the TriggerSystem and hook our handler into it
+                EventInfo triggerEvent = Type.GetType("TriggerSystem, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null").GetEvents(BindingFlags.Public | BindingFlags.Static).FirstOrDefault();
+                MethodInfo handlerMethod = typeof(VNyanTriggerListener).GetMethod("HandleTrigger");
+                Delegate triggerDelegate = Delegate.CreateDelegate(triggerEvent.EventHandlerType, this, handlerMethod);
+                triggerEvent.AddEventHandler(null, triggerDelegate);
+            } catch(Exception e)
+            {
+                Debug.Log($"Error in trigger listener: {e.Message}");
+            }
+            
         } 
 
         public void HandleTrigger(object arg)
