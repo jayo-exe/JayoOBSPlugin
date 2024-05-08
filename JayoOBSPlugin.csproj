@@ -41,7 +41,7 @@
   </ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="copy &quot;$(TargetDir)JayoOBSPlugin.dll&quot; &quot;$(SolutionDir)..\..\..\MidiPlugin\Assets\JayoObsPlugin\Plugins&quot; /Y" />
+		<Exec Command="copy &quot;$(TargetDir)JayoOBSPlugin.dll&quot; &quot;$(SolutionDir)..\..\..\..\MidiPlugin\Assets\JayoObsPlugin\Plugins&quot; /Y" />
 	</Target>
 
 </Project>

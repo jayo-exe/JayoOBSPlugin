@@ -18,6 +18,7 @@ namespace JayoOBSPlugin
         private string[] sep;
         private VNyanHelper _VNyanHelper;
         private VNyanTriggerDispatcher triggerDispatcher;
+        private VNyanTriggerListener triggerListener;
         private ObsManager obsManager;
 
 
@@ -90,12 +91,18 @@ namespace JayoOBSPlugin
 
         }
 
+        private void OnVNyanTrigger(string triggerValue)
+        {
+            _VNyanHelper.setVNyanParameterString("_xjo_last_trigger", triggerValue);
+        }
+
         public void Awake()
         {
 
             Debug.Log($"OBS is Awake!");
             sep = new string[] { ";;" };
             _VNyanHelper = new VNyanHelper();
+
             obsManager = gameObject.AddComponent<ObsManager>();
             Debug.Log($"Loading Settings");
             // Load settings
@@ -113,6 +120,10 @@ namespace JayoOBSPlugin
             mainThread = gameObject.AddComponent<MainThreadDispatcher>();
             triggerDispatcher = gameObject.AddComponent<VNyanTriggerDispatcher>();
 
+            triggerListener = gameObject.AddComponent<VNyanTriggerListener>();
+            triggerListener.Listen("_xjm_");
+            triggerListener.TriggerFired += OnVNyanTrigger;
+            
             try
             {
                 window = _VNyanHelper.pluginSetup(this, "Jayo's OBS Plugin", windowPrefab);
@@ -322,6 +333,7 @@ namespace JayoOBSPlugin
 
         public void initObs()
         {
+            
             if (obsManager.serverAddress == "" || Int32.Parse(obsManager.serverPort) <= 0)
             {
                 setStatusTitle("OBS IP and Port required");

@@ -9,6 +9,9 @@ using VNyanInterface;
 using System.Runtime.CompilerServices;
 using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
+using System.Reflection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace JayoOBSPlugin
 {
@@ -44,6 +47,8 @@ namespace JayoOBSPlugin
                 {
                     var eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
                 }
+
+                
 
 
                 var canvasObject = GameObject.Find("__VNyanTestHarness/__VNyanTestCanvas");
@@ -86,6 +91,11 @@ namespace JayoOBSPlugin
                 harnessObject.AddComponent<VNyanTestHarness>();
                 testHarness = harnessObject.GetComponent<VNyanTestHarness>();
             }
+            if (GameObject.FindObjectOfType<TriggerSystem>() == null)
+            {
+                var triggerSystemObj = new GameObject("TriggerSystem", typeof(TriggerSystem));
+            }
+
         }
 
         public void setVNyanParameterFloat(string parameterName, float value)
