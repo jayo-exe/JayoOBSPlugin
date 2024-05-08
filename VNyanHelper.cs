@@ -3,15 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using UnityEditor;
-using System.IO;
 using VNyanInterface;
-using System.Runtime.CompilerServices;
-using System.Linq;
-using System.Runtime.InteropServices.ComTypes;
-using System.Reflection;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace JayoOBSPlugin
 {
@@ -91,11 +83,6 @@ namespace JayoOBSPlugin
                 harnessObject.AddComponent<VNyanTestHarness>();
                 testHarness = harnessObject.GetComponent<VNyanTestHarness>();
             }
-            if (GameObject.FindObjectOfType<TriggerSystem>() == null)
-            {
-                var triggerSystemObj = new GameObject("TriggerSystem", typeof(TriggerSystem));
-            }
-
         }
 
         public void setVNyanParameterFloat(string parameterName, float value)

@@ -332,8 +332,7 @@ namespace JayoOBSPlugin
         }
 
         public void initObs()
-        {
-            
+        {           
             if (obsManager.serverAddress == "" || Int32.Parse(obsManager.serverPort) <= 0)
             {
                 setStatusTitle("OBS IP and Port required");
