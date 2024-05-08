@@ -1,4 +1,4 @@
-# Jayo's Crowd Control Plugin for VNyan
+# Jayo's OBS Plugin for VNyan
 
 A VNyan Plugin that allows you to connect to OBS over the OBS WEbsocket API and use VNyan Parameters to control OBS through your VNyan node graphs. Change scenes, enable/disable Sources and Filters, mute and unmute Audio inputs, and more!
 
@@ -23,7 +23,7 @@ A VNyan Plugin that allows you to connect to OBS over the OBS WEbsocket API and 
 ### Connecting to OBS
 In order for the plugin to interact with your OBS, you'll need to authorize the plugin access the OBS Websocket API.  You can do this by providing the password for your API and asjusting the pre-set IP address and Port if needed. This authorization is saved in the plugin's settings, so you won't need to do this every time!
 
-If you're unsure about whether or not your OBS Websocket API is running or need to find our password, follow these steps in OBS:
+If you're unsure about whether or not your OBS Websocket API is running or need to find your API password, follow these steps in OBS:
 1. In the top menu, go to Tools -> Websocket Server Settings
 2. Make sure "Enable Websocket Server" is checked off, set or generate a password if needed, and click the "Show Connect Info" button
 3. Take note of the Server IP, Port, and Password, and enter these in the relevant fields in the OBS Plugin Window
