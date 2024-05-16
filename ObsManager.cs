@@ -81,5 +81,10 @@ namespace JayoOBSPlugin
             obs.Disconnect();
         }
 
+        public bool isConnected()
+        {
+            return connected;
+        }
+
     }
 }

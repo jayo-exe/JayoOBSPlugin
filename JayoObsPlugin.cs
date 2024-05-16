@@ -29,6 +29,7 @@ namespace JayoOBSPlugin
         private void OnObsSceneChanged(object sender, OBSWebsocketDotNet.Types.Events.ProgramSceneChangedEventArgs e)
         {
             _VNyanHelper.setVNyanParameterString("_xjo_currentScene", e.SceneName);
+            triggerDispatcher.callVNyanTrigger("_xjo_sceneChanged");
         }
 
         private void OnObsVolumeMeters(object sender, OBSWebsocketDotNet.Types.Events.InputVolumeMetersEventArgs e)
@@ -39,17 +40,20 @@ namespace JayoOBSPlugin
         private void OnObsVirtualcamStateChanged(object sender, OBSWebsocketDotNet.Types.Events.VirtualcamStateChangedEventArgs e)
         {
             _VNyanHelper.setVNyanParameterFloat("_xjo_vCamActive", e.OutputState.IsActive ? 1 : 0);
+            triggerDispatcher.callVNyanTrigger(e.OutputState.IsActive ? "_xjo_vCamStarted" : "_xjo_vCamStopped");
         }
 
         private void OnObsRecordStateChanged(object sender, OBSWebsocketDotNet.Types.Events.RecordStateChangedEventArgs e)
         {
             _VNyanHelper.setVNyanParameterFloat("_xjo_recordActive", e.OutputState.IsActive ? 1 : 0);
+            triggerDispatcher.callVNyanTrigger(e.OutputState.IsActive ? "_xjo_recordStarted" : "_xjo_recordStopped");
             _VNyanHelper.setVNyanParameterFloat("_xjo_recordPaused", obsManager.obs.GetRecordStatus().IsRecordingPaused ? 1 : 0);
         }
 
         private void OnObsStreamStateChanged(object sender, OBSWebsocketDotNet.Types.Events.StreamStateChangedEventArgs e)
         {
             _VNyanHelper.setVNyanParameterFloat("_xjo_streamActive", e.OutputState.IsActive ? 1 : 0);
+            triggerDispatcher.callVNyanTrigger(e.OutputState.IsActive ? "_xjo_streamStarted" : "_xjo_streamStopped");
         }
 
         private void OnObsConnected(object sender, EventArgs e)
@@ -70,6 +74,7 @@ namespace JayoOBSPlugin
             
             mainThread.Enqueue(() => {
                 setStatusTitle("Connected To OBS");
+                triggerDispatcher.callVNyanTrigger("_xjo_obsConnected");
             });
 
 
@@ -86,6 +91,7 @@ namespace JayoOBSPlugin
 
             mainThread.Enqueue(() => {
                 setStatusTitle("Disconnected From OBS");
+                triggerDispatcher.callVNyanTrigger("_xjo_obsDisconnected");
                 deInitObs();
             });
 
@@ -132,6 +138,8 @@ namespace JayoOBSPlugin
             {
                 Debug.Log(e.ToString());
             }
+
+            
 
             // Hide the window by default
             if (window != null)
@@ -191,6 +199,8 @@ namespace JayoOBSPlugin
 
         private void Update()
         {
+            if (!obsManager.isConnected()) return;
+
             //check for items to handle
             string sceneToSwitch = _VNyanHelper.getVNyanParameterString("_xjo_scenetoswitch");
             if(sceneToSwitch != "")

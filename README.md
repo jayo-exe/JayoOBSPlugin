@@ -3,13 +3,18 @@
 A VNyan Plugin that allows you to connect to OBS over the OBS WEbsocket API and use VNyan Parameters to control OBS through your VNyan node graphs. Change scenes, enable/disable Sources and Filters, mute and unmute Audio inputs, and more!
 
 # Table of contents
-1. [Installation](#installation)
-2. [Usage](#usage)
+1. [Compatibility](#compatability)
+2. [Installation](#installation)
+3. [Usage](#usage)
     1. [Connecting to OBS](#connecting-to-obs)
     2. [Controlling OBS](#controlling-obs)
         1. [Control Parameters](#control-parameters)
         2. [Status Parameters](#status-parameters)
+        3. [Outbound Triggers](#outbound-triggers)
 3. [Development](#development)
+
+## Compatibility
+At the current time, this plugin in only compatible with OBS Websocket Server 5.0 and above, which means that **OBS Version 28 or above is required for proper functioning of this plugin**
 
 ## Installation
 1. Grab the ZIP file from the [latest release](https://github.com/jayo-exe/JayoOBSPlugin/releases/latest) of the plugin.
@@ -28,7 +33,7 @@ If you're unsure about whether or not your OBS Websocket API is running or need 
 2. Make sure "Enable Websocket Server" is checked off, set or generate a password if needed, and click the "Show Connect Info" button
 3. Take note of the Server IP, Port, and Password, and enter these in the relevant fields in the OBS Plugin Window
 
-Once the plugin has been authorized, it'll be able to retrieve status information from OBS as well as control certain actions through VNyan Parameters.  A sample node graph is included which provides various examples!
+Once the plugin has been authorized, it'll be able to retrieve status information from OBS as well as control certain actions through VNyan Parameters and Triggers.  A sample node graph is included which provides various examples!
 
 ### Controlling OBS
 When the plugin is connected, the plugin will set some "Status Parameters" related to some critial statuses within OBS. It'll also watch for your node graphs to set specially-named "Control Parameters" to make targeted actions within OBS.
@@ -55,7 +60,7 @@ These are the Control Parameters that can be set to make somethig happen in OBS:
 | Stop Streaming        | `_xjo_stopstream`      | set to 1 to stop streaming                               | `1`                          |
 
 #### Status Parameters
-There are the Status Parameters that will automatically get set in response to certain things happening in OBS:
+These are the Status Parameters that will automatically get set in response to certain things happening in OBS:
 
 | Title                  | Paramter Name       | Description of Value                                         | Example Value   |
 |------------------------|---------------------|--------------------------------------------------------------|-----------------|
@@ -65,6 +70,20 @@ There are the Status Parameters that will automatically get set in response to c
 | Recording Paused State | `_xjo_recordpaused` | Whether or not an active recording state is currently paused | `0`             |
 | Stream State           | `_xjo_streamactive` | The active state of the OBS Streaming                        | `1`             |
 
+#### Outbound Triggers
+These are the Triggers that will be fired by the OBS plugin in response to certain things happening in OBS:
+
+| Title               | Trigger Name           | Description of Action                              |
+|---------------------|------------------------|----------------------------------------------------|
+| Plugin Connected    | `_xjo_obsConnected`    | The plugin has connected to the OBS websocket      |
+| Plugin Disconnected | `_xjo_obsDisconnected` | The plugin has disconnected from the OBS websocket |
+| Scene Changed       | `_xjo_sceneChanged`    | The scene in OBS has been changed                  |
+| Virtual Cam Started | `_xjo_vCamStarted`     | the OBS virtual camera has been activated          |
+| Virtual Cam Stopped | `_xjo_vCamStopped`     | the OBS virtual camera has been deactivated        |
+| Recording Started   | `_xjo_recordStarted`   | recording has started in OBS                       |
+| Recording Stopped   | `_xjo_recordStopped`   | recording has stopped in OBS                       |
+| Streaming Started   | `_xjo_streamStarted`   | streaming has started in OBS                       |
+| Streaming Stopped   | `_xjo_streamStopped`   | streaming has stopped in OBS                       |
 
 ## Development
 (Almost) Everything you'll need to develop a fork of this plugin (or some other plugin based on this one)!  The main VS project contains all of the code for the plugin DLL, and the `dist` folder contains a `unitypackage` that can be dragged into a project to build and modify the UI and export the modified Custom Object.
