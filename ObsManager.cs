@@ -43,11 +43,6 @@ namespace JayoOBSPlugin
             }
         }
 
-        private void OnDisable()
-        {
-            deInitObs();
-        }
-
         private void OnDestroy()
         {
             deInitObs();

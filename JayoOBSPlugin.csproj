@@ -5,9 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath>E:\vNyan\VNyan_Data\Managed\Assembly-CSharp.dll</HintPath>
-    </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>E:\vNyan\VNyan_Data\Managed\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -36,7 +33,7 @@
       <HintPath>E:\Unity\Editor\2020.3.40f1\Editor\Data\Managed\UnityEngine\UnityEngine.UIModule.dll</HintPath>
     </Reference>
     <Reference Include="VNyanInterface">
-      <HintPath>E:\vNyan\VNyan_Data\Managed\VNyanInterface.dll</HintPath>
+      <HintPath>E:\VNyan1.4.5\VNyan_Data\Managed\VNyanInterface.dll</HintPath>
     </Reference>
     <Reference Include="websocket-sharp">
       <HintPath>E:\vNyan\VNyan_Data\Managed\websocket-sharp.dll</HintPath>
@@ -44,7 +41,7 @@
   </ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="copy &quot;$(TargetDir)JayoOBSPlugin.dll&quot; &quot;$(SolutionDir)..\..\..\..\MidiPlugin\Assets\JayoObsPlugin\Plugins&quot; /Y" />
+		<Exec Command="copy &quot;$(TargetDir)JayoOBSPlugin.dll&quot; &quot;$(SolutionDir)..\..\..\..\VNyanPlugins\Assets\JayoObsPlugin\Plugins&quot; /Y" />
 	</Target>
 
 </Project>

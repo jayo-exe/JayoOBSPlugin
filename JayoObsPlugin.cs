@@ -5,6 +5,11 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Linq.Expressions;
+using VNyanInterface;
+using JayoOBSPlugin.VNyanPluginHelper;
+using JJayoOBSPlugin.VNyanPluginHelper;
 
 namespace JayoOBSPlugin
 {
@@ -14,13 +19,15 @@ namespace JayoOBSPlugin
         public GameObject window;
 
         public MainThreadDispatcher mainThread;
-
-        private string[] sep;
-        private VNyanHelper _VNyanHelper;
-        private VNyanTriggerDispatcher triggerDispatcher;
-        private VNyanTriggerListener triggerListener;
         private ObsManager obsManager;
+        private string[] sep;
 
+        private VNyanHelper _VNyanHelper;
+        private VNyanPluginUpdater updater;
+        
+        private string currentVersion = "v0.3.0";
+        private string repoName = "jayo-exe/JayoOBSPlugin";
+        private string updateLink = "https://jayo-exe.itch.io/obs-plugin-for-vnyan";
 
         public void Start()
         {
@@ -28,79 +35,74 @@ namespace JayoOBSPlugin
 
         private void OnObsSceneChanged(object sender, OBSWebsocketDotNet.Types.Events.ProgramSceneChangedEventArgs e)
         {
-            _VNyanHelper.setVNyanParameterString("_xjo_currentScene", e.SceneName);
-            triggerDispatcher.callVNyanTrigger("_xjo_sceneChanged");
+            Debug.Log("[OBS Plugin] Scene changed");
+           setStringParam("_xjo_currentScene", e.SceneName);
+            callTrigger("_xjo_sceneChanged", 0, 0, 0, "", "", "");
         }
 
         private void OnObsVolumeMeters(object sender, OBSWebsocketDotNet.Types.Events.InputVolumeMetersEventArgs e)
         {
-            _VNyanHelper.setVNyanParameterString("_xjo_volumeMeters", e.inputs.First<JObject>().ToString());
+           setStringParam("_xjo_volumeMeters", e.inputs.First<JObject>().ToString());
         }
 
         private void OnObsVirtualcamStateChanged(object sender, OBSWebsocketDotNet.Types.Events.VirtualcamStateChangedEventArgs e)
         {
-            _VNyanHelper.setVNyanParameterFloat("_xjo_vCamActive", e.OutputState.IsActive ? 1 : 0);
-            triggerDispatcher.callVNyanTrigger(e.OutputState.IsActive ? "_xjo_vCamStarted" : "_xjo_vCamStopped");
+           setFloatParam("_xjo_vCamActive", e.OutputState.IsActive ? 1 : 0);
+            callTrigger(e.OutputState.IsActive ? "_xjo_vCamStarted" : "_xjo_vCamStopped", 0, 0, 0, "", "", "");
         }
 
         private void OnObsRecordStateChanged(object sender, OBSWebsocketDotNet.Types.Events.RecordStateChangedEventArgs e)
         {
-            _VNyanHelper.setVNyanParameterFloat("_xjo_recordActive", e.OutputState.IsActive ? 1 : 0);
-            triggerDispatcher.callVNyanTrigger(e.OutputState.IsActive ? "_xjo_recordStarted" : "_xjo_recordStopped");
-            _VNyanHelper.setVNyanParameterFloat("_xjo_recordPaused", obsManager.obs.GetRecordStatus().IsRecordingPaused ? 1 : 0);
+           setFloatParam("_xjo_recordActive", e.OutputState.IsActive ? 1 : 0);
+            callTrigger(e.OutputState.IsActive ? "_xjo_recordStarted" : "_xjo_recordStopped", 0, 0, 0, "", "", "");
+           setFloatParam("_xjo_recordPaused", obsManager.obs.GetRecordStatus().IsRecordingPaused ? 1 : 0);
         }
 
         private void OnObsStreamStateChanged(object sender, OBSWebsocketDotNet.Types.Events.StreamStateChangedEventArgs e)
         {
-            _VNyanHelper.setVNyanParameterFloat("_xjo_streamActive", e.OutputState.IsActive ? 1 : 0);
-            triggerDispatcher.callVNyanTrigger(e.OutputState.IsActive ? "_xjo_streamStarted" : "_xjo_streamStopped");
+           setFloatParam("_xjo_streamActive", e.OutputState.IsActive ? 1 : 0);
+            callTrigger(e.OutputState.IsActive ? "_xjo_streamStarted" : "_xjo_streamStopped", 0, 0, 0, "", "", "");
         }
 
         private void OnObsConnected(object sender, EventArgs e)
         {
-
+            setStatusTitle("Connected To OBS");
+            callTrigger("_xjo_obsConnected", 0, 0, 0, "", "", "");
+                
             string scene = obsManager.obs.GetCurrentProgramScene();
-            _VNyanHelper.setVNyanParameterString("_xjo_currentScene", scene);
-
+           setStringParam("_xjo_currentScene", scene);
+                
             OBSWebsocketDotNet.Types.VirtualCamStatus vCamActive = obsManager.obs.GetVirtualCamStatus();
-            _VNyanHelper.setVNyanParameterFloat("_xjo_vCamActive", vCamActive.IsActive ? 1 : 0);
-
+           setFloatParam("_xjo_vCamActive", vCamActive.IsActive ? 1 : 0);
+                
             OBSWebsocketDotNet.Types.RecordingStatus recordingActive = obsManager.obs.GetRecordStatus();
-            _VNyanHelper.setVNyanParameterFloat("_xjo_recordActive", recordingActive.IsRecording ? 1 : 0);
-            _VNyanHelper.setVNyanParameterFloat("_xjo_recordPaused", recordingActive.IsRecordingPaused ? 1 : 0);
-
+           setFloatParam("_xjo_recordActive", recordingActive.IsRecording ? 1 : 0);
+           setFloatParam("_xjo_recordPaused", recordingActive.IsRecordingPaused ? 1 : 0);
+                
             OBSWebsocketDotNet.Types.OutputStatus streamActive = obsManager.obs.GetStreamStatus();
-            _VNyanHelper.setVNyanParameterFloat("_xjo_streamActive", streamActive.IsActive ? 1 : 0);
-            
-            mainThread.Enqueue(() => {
-                setStatusTitle("Connected To OBS");
-                triggerDispatcher.callVNyanTrigger("_xjo_obsConnected");
-            });
-
-
+           setFloatParam("_xjo_streamActive", streamActive.IsActive ? 1 : 0);
         }
 
         private void OnObsDisconnected(object sender, OBSWebsocketDotNet.Communication.ObsDisconnectionInfo e)
         {
-            
-            _VNyanHelper.setVNyanParameterString("_xjo_currentScene", "");
-            _VNyanHelper.setVNyanParameterFloat("_xjo_vCamActive",  0);
-            _VNyanHelper.setVNyanParameterFloat("_xjo_recordActive", 0);
-            _VNyanHelper.setVNyanParameterFloat("_xjo_recordPaused", 0);
-            _VNyanHelper.setVNyanParameterFloat("_xjo_streamActive", 0);
-
-            mainThread.Enqueue(() => {
-                setStatusTitle("Disconnected From OBS");
-                triggerDispatcher.callVNyanTrigger("_xjo_obsDisconnected");
-                deInitObs();
-            });
-
+            setStatusTitle($"Disconnected From OBS:\n{e.DisconnectReason}");
+            callTrigger("_xjo_obsDisconnected", 0, 0, 0, "", "", "");
+                
+           setStringParam("_xjo_currentScene", "");
+           setFloatParam("_xjo_vCamActive", 0);
+           setFloatParam("_xjo_recordActive", 0);
+           setFloatParam("_xjo_recordPaused", 0);
+           setFloatParam("_xjo_streamActive", 0);
+                
+            deInitObs();
         }
 
+        /*
         private void OnVNyanTrigger(string triggerValue)
         {
-            _VNyanHelper.setVNyanParameterString("_xjo_last_trigger", triggerValue);
+           setStringParam("_xjo_last_trigger", triggerValue);
         }
+        */
 
         public void Awake()
         {
@@ -109,10 +111,17 @@ namespace JayoOBSPlugin
             sep = new string[] { ";;" };
             _VNyanHelper = new VNyanHelper();
 
+            updater = new VNyanPluginUpdater(repoName, currentVersion, updateLink);
+            updater.OpenUrlRequested += (url) => mainThread.Enqueue(() => { Application.OpenURL(url); });
+
             obsManager = gameObject.AddComponent<ObsManager>();
+            mainThread = gameObject.AddComponent<MainThreadDispatcher>();
+            //_VNyanHelper.registerTriggerListener(obsManager);
+
             Debug.Log($"Loading Settings");
             // Load settings
             loadPluginSettings();
+            updater.CheckForUpdates();
 
             obsManager.obs.Connected += OnObsConnected;
             obsManager.obs.Disconnected += OnObsDisconnected;
@@ -122,13 +131,7 @@ namespace JayoOBSPlugin
             obsManager.obs.RecordStateChanged += OnObsRecordStateChanged;
             obsManager.obs.StreamStateChanged += OnObsStreamStateChanged;
             Debug.Log($"Beginning Plugin Setup");
-
-            mainThread = gameObject.AddComponent<MainThreadDispatcher>();
-            triggerDispatcher = gameObject.AddComponent<VNyanTriggerDispatcher>();
-
-            triggerListener = gameObject.AddComponent<VNyanTriggerListener>();
-            triggerListener.Listen("_xjm_");
-            triggerListener.TriggerFired += OnVNyanTrigger;
+            
             
             try
             {
@@ -170,6 +173,12 @@ namespace JayoOBSPlugin
                 {
                     Debug.Log($"Preparing Plugin Window");
 
+                    updater.PrepareUpdateUI(
+                        window.transform.Find("Panel/VersionText").gameObject,
+                        window.transform.Find("Panel/UpdateText").gameObject,
+                        window.transform.Find("Panel/UpdateButton").gameObject
+                    );
+
                     window.transform.Find("Panel/TitleBar/CloseButton").GetComponent<Button>().onClick.AddListener(() => { closePluginWindow(); });
                     window.transform.Find("Panel/StatusControls/ConnectButton").GetComponent<Button>().onClick.AddListener(() => {
                         initObs();
@@ -190,7 +199,8 @@ namespace JayoOBSPlugin
                 }
                 catch (Exception e)
                 {
-                    setStatusTitle($"Couldn't auto-initialize OBS Connection: {e.Message}");
+                   setStatusTitle($"Couldn't auto-initialize OBS Connection:\n{e.Message}");
+                   deInitObs();
                 }
             }
 
@@ -205,14 +215,14 @@ namespace JayoOBSPlugin
             string sceneToSwitch = _VNyanHelper.getVNyanParameterString("_xjo_scenetoswitch");
             if(sceneToSwitch != "")
             {
-                _VNyanHelper.setVNyanParameterString("_xjo_scenetoswitch", "");
+               setStringParam("_xjo_scenetoswitch", "");
                 obsManager.obs.SetCurrentProgramScene(sceneToSwitch);          
             }
             //Hotkey name to activate
             string hotkeyToFire = _VNyanHelper.getVNyanParameterString("_xjo_hotkeytofire");
             if (hotkeyToFire != "")
             {
-                _VNyanHelper.setVNyanParameterString("_xjo_hotkeytofire", "");
+               setStringParam("_xjo_hotkeytofire", "");
                 obsManager.obs.TriggerHotkeyByName(hotkeyToFire);
             }
 
@@ -220,7 +230,7 @@ namespace JayoOBSPlugin
             string audioToMute = _VNyanHelper.getVNyanParameterString("_xjo_audiotomute");
             if (audioToMute != "")
             {
-                _VNyanHelper.setVNyanParameterString("_xjo_audiotomute", "");
+               setStringParam("_xjo_audiotomute", "");
                 obsManager.obs.SetInputMute(audioToMute, true);
             }
 
@@ -228,7 +238,7 @@ namespace JayoOBSPlugin
             string audioToUnmute = _VNyanHelper.getVNyanParameterString("_xjo_audiotounmute");
             if (audioToUnmute != "")
             {
-                _VNyanHelper.setVNyanParameterString("_xjo_audiotounmute", "");
+               setStringParam("_xjo_audiotounmute", "");
                 obsManager.obs.SetInputMute(audioToUnmute, false);
                 
             }
@@ -237,7 +247,7 @@ namespace JayoOBSPlugin
             string audioToSet = _VNyanHelper.getVNyanParameterString("_xjo_audiotoset");
             if (audioToSet != "")
             {
-                _VNyanHelper.setVNyanParameterString("_xjo_audiotoset", "");
+                setStringParam("_xjo_audiotoset", "");
                 string[] audioParts = audioToSet.Split(sep, StringSplitOptions.None);
                 obsManager.obs.SetInputVolume(audioParts[0], float.Parse(audioParts[1]));
                 
@@ -247,7 +257,7 @@ namespace JayoOBSPlugin
             string itemToEnable = _VNyanHelper.getVNyanParameterString("_xjo_itemtoenable");
             if (itemToEnable != "")
             {
-                _VNyanHelper.setVNyanParameterString("_xjo_itemtoenable", "");
+               setStringParam("_xjo_itemtoenable", "");
                 string[] itemParts = itemToEnable.Split(sep, StringSplitOptions.None);
                 int itemId = obsManager.obs.GetSceneItemId(itemParts[0], itemParts[1], 0);
                 obsManager.obs.SetSceneItemEnabled(itemParts[0], itemId, true);
@@ -258,7 +268,7 @@ namespace JayoOBSPlugin
             string itemToDisable = _VNyanHelper.getVNyanParameterString("_xjo_itemtodisable");
             if (itemToDisable != "")
             {
-                _VNyanHelper.setVNyanParameterString("_xjo_itemtodisable", "");
+               setStringParam("_xjo_itemtodisable", "");
                 string[] itemParts = itemToDisable.Split(sep, StringSplitOptions.None);
                 int itemId = obsManager.obs.GetSceneItemId(itemParts[0], itemParts[1], 0);
                 obsManager.obs.SetSceneItemEnabled(itemParts[0], itemId, false);
@@ -269,7 +279,7 @@ namespace JayoOBSPlugin
             string filterToEnable = _VNyanHelper.getVNyanParameterString("_xjo_filtertoenable");
             if (filterToEnable != "")
             {
-                _VNyanHelper.setVNyanParameterString("_xjo_filtertoenable", "");
+               setStringParam("_xjo_filtertoenable", "");
                 string[] filterParts = filterToEnable.Split(sep, StringSplitOptions.None);
                 obsManager.obs.SetSourceFilterEnabled(filterParts[0], filterParts[1], true);
                 
@@ -279,7 +289,7 @@ namespace JayoOBSPlugin
             string filterToDisable = _VNyanHelper.getVNyanParameterString("_xjo_filtertodisable");
             if (filterToDisable != "")
             {
-                _VNyanHelper.setVNyanParameterString("_xjo_filtertodisable", "");
+               setStringParam("_xjo_filtertodisable", "");
                 string[] filterParts = filterToDisable.Split(sep, StringSplitOptions.None);
                 obsManager.obs.SetSourceFilterEnabled(filterParts[0], filterParts[1], false);
                 
@@ -289,7 +299,7 @@ namespace JayoOBSPlugin
             float startVirtualCam = _VNyanHelper.getVNyanParameterFloat("_xjo_startvcam");
             if (startVirtualCam == 1)
             {
-                _VNyanHelper.setVNyanParameterFloat("_xjo_startvcam", 0);
+               setFloatParam("_xjo_startvcam", 0);
                 obsManager.obs.StartVirtualCam();
                 
             }
@@ -298,7 +308,7 @@ namespace JayoOBSPlugin
             float stopVirtualCam = _VNyanHelper.getVNyanParameterFloat("_xjo_stopvcam");
             if (stopVirtualCam == 1)
             {
-                _VNyanHelper.setVNyanParameterFloat("_xjo_stopvcam", 0);
+               setFloatParam("_xjo_stopvcam", 0);
                 obsManager.obs.StopVirtualCam();
                 
             }
@@ -307,7 +317,7 @@ namespace JayoOBSPlugin
             float startRecord = _VNyanHelper.getVNyanParameterFloat("_xjo_startrecord");
             if (startRecord == 1)
             {
-                _VNyanHelper.setVNyanParameterFloat("_xjo_startrecord", 0);
+               setFloatParam("_xjo_startrecord", 0);
                 obsManager.obs.StartRecord();
                 
             }
@@ -316,7 +326,7 @@ namespace JayoOBSPlugin
             float stopRecord = _VNyanHelper.getVNyanParameterFloat("_xjo_stoprecord");
             if (stopRecord == 1)
             {
-                _VNyanHelper.setVNyanParameterFloat("_xjo_stoprecord", 0);
+               setFloatParam("_xjo_stoprecord", 0);
                 obsManager.obs.StopRecord();
                 
             }
@@ -325,7 +335,7 @@ namespace JayoOBSPlugin
             float startStream = _VNyanHelper.getVNyanParameterFloat("_xjo_startstream");
             if (startStream == 1)
             {
-                _VNyanHelper.setVNyanParameterFloat("_xjo_startstream", 0);
+               setFloatParam("_xjo_startstream", 0);
                 obsManager.obs.StartStream();
                 
             }
@@ -334,11 +344,54 @@ namespace JayoOBSPlugin
             float stopStream = _VNyanHelper.getVNyanParameterFloat("_xjo_stopstream");
             if (stopStream == 1)
             {
-                _VNyanHelper.setVNyanParameterFloat("_xjo_stopstream", 0);
+               setFloatParam("_xjo_stopstream", 0);
                 obsManager.obs.StopStream();  
             }
 
+            //Input to fetch settings for
+            string inputToFetch = _VNyanHelper.getVNyanParameterString("_xjo_inputtofetch");
+            if (inputToFetch != "")
+            {
+               setStringParam("_xjo_inputtofetch", "");
+                string[] inputParts = inputToFetch.Split(sep, StringSplitOptions.None);
 
+                OBSWebsocketDotNet.Types.InputSettings inputSet  = obsManager.obs.GetInputSettings(inputParts[0]);
+                Debug.Log(inputSet.Settings.ToString());
+               setStringParam("_xjo_inputvalue", inputParts[1]);
+
+            }
+
+            //Input to change settings for
+            string inputToUpdate = _VNyanHelper.getVNyanParameterString("_xjo_inputtoupdate");
+            string inputNewValue = _VNyanHelper.getVNyanParameterString("_xjo_inputnewvalue");
+            if (inputToUpdate != "")
+            {
+               setStringParam("_xjo_inputtoupdate", "");
+               setStringParam("_xjo_inputnewvalue", "");
+
+                string[] inputParts = inputToUpdate.Split(sep, StringSplitOptions.None);
+
+                OBSWebsocketDotNet.Types.InputSettings inputSet = obsManager.obs.GetInputSettings(inputParts[0]);
+
+               setStringParam("_xjo_inputtype", inputSet.Settings[inputParts[1]].Type.ToString());
+                switch (inputSet.Settings[inputParts[1]].Type)
+                {
+                    case JTokenType.Boolean:
+                        inputSet.Settings[inputParts[1]] = Convert.ToBoolean(inputNewValue);
+                        break;
+                    case JTokenType.Integer:
+                        inputSet.Settings[inputParts[1]] = Convert.ToInt32(inputNewValue);
+                        break;
+                    case JTokenType.Float:
+                        inputSet.Settings[inputParts[1]] = Convert.ToSingle(inputNewValue);
+                        break;
+                    default:
+                        inputSet.Settings[inputParts[1]] = inputNewValue;
+                        break;
+                }
+
+                obsManager.obs.SetInputSettings(inputSet);
+            }
         }
 
         public void initObs()
@@ -346,6 +399,7 @@ namespace JayoOBSPlugin
             if (obsManager.serverAddress == "" || Int32.Parse(obsManager.serverPort) <= 0)
             {
                 setStatusTitle("OBS IP and Port required");
+                deInitObs();
                 return;
             }
             mainThread.Enqueue(() => {
@@ -418,8 +472,43 @@ namespace JayoOBSPlugin
 
         public void setStatusTitle(string titleText)
         {
-            Text StatusTitle = window.transform.Find("Panel/StatusControls/Status Indicator").GetComponent<Text>();
-            StatusTitle.text = titleText;
+            mainThread.Enqueue(() =>
+            {
+                Text StatusTitle = window.transform.Find("Panel/StatusControls/Status Indicator").GetComponent<Text>();
+                StatusTitle.text = titleText;
+            });
+        }
+
+        public void setStringParam(string paramName, string value)
+        {
+            mainThread.Enqueue(() =>
+            {
+                _VNyanHelper.setVNyanParameterString(paramName, value);
+            });
+        }
+
+        public void setFloatParam(string paramName, float value)
+        {
+            mainThread.Enqueue(() =>
+            {
+                _VNyanHelper.setVNyanParameterFloat(paramName, value);
+            });
+        }
+
+        public void callTrigger(string triggerName, int value1, int value2, int value3, string text1, string text2, string text3)
+        {
+            mainThread.Enqueue(() =>
+            {
+                _VNyanHelper.callTrigger(triggerName, value1, value2, value3, text1, text2, text3);
+            });
+        }
+
+        public void callSimpleTrigger(string triggerName)
+        {
+            mainThread.Enqueue(() =>
+            {
+                _VNyanHelper.callTrigger(triggerName, 0, 0, 0, "", "", "");
+            });
         }
 
         public Dictionary<string, Dictionary<string, string>> GetTriggerList()

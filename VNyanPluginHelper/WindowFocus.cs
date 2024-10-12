@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace JayoOBSPlugin
+namespace JayoOBSPlugin.VNyanPluginHelper
 {
     class WindowDrag : MonoBehaviour, IDragHandler, IPointerDownHandler
     {
