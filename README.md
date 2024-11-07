@@ -36,7 +36,7 @@ If you're unsure about whether or not your OBS Websocket API is running or need 
 Once the plugin has been authorized, it'll be able to retrieve status information from OBS as well as control certain actions through VNyan Parameters and Triggers.  A sample node graph is included which provides various examples!
 
 ### Controlling OBS
-When the plugin is connected, the plugin will set some "Status Parameters" related to some critial statuses within OBS. It'll also watch for your node graphs to set specially-named "Control Parameters" to make targeted actions within OBS.
+When the plugin is connected, the plugin will set some "Status Parameters" related to some critical statuses within OBS. When certain events happen within OBS, the plugin will emit Outbound Triggers that you can respond to in your node graphs.  You can call certain Inbound Triggers in your node graphs to control OBS and make things happen.
 
 #### Inbound Triggers
 
