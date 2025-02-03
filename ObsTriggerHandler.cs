@@ -172,7 +172,7 @@ namespace JayoOBSPlugin
             string targetParameterName = _VNyanHelper.parseStringArgument(text3);
 
             OBSWebsocketDotNet.Types.InputSettings inputSet = obs.GetInputSettings(inputName);
-            Debug.Log(obs.GetInputDefaultSettings(inputSet.InputKind).ToString());
+            //Debug.Log(obs.GetInputDefaultSettings(inputSet.InputKind).ToString());
             JObject baseSettings = obs.GetInputDefaultSettings(inputSet.InputKind).ToObject<JObject>();
             baseSettings.Merge(inputSet.Settings);
 

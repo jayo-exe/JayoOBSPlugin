@@ -10,6 +10,7 @@ using System.Linq.Expressions;
 using VNyanInterface;
 using JayoOBSPlugin.VNyanPluginHelper;
 using JJayoOBSPlugin.VNyanPluginHelper;
+using TMPro;
 
 namespace JayoOBSPlugin
 {
@@ -26,7 +27,7 @@ namespace JayoOBSPlugin
         private VNyanHelper _VNyanHelper;
         private VNyanPluginUpdater updater;
 
-        private string currentVersion = "v0.3.0";
+        private string currentVersion = "v0.4.0";
         private string repoName = "jayo-exe/JayoOBSPlugin";
         private string updateLink = "https://jayo-exe.itch.io/obs-plugin-for-vnyan";
 
@@ -36,7 +37,7 @@ namespace JayoOBSPlugin
 
         private void OnObsSceneChanged(object sender, OBSWebsocketDotNet.Types.Events.ProgramSceneChangedEventArgs e)
         {
-            Debug.Log("[OBS Plugin] Scene changed");
+            //Debug.Log("[OBS Plugin] Scene changed");
             setStringParam("_xjo_currentScene", e.SceneName);
             callTrigger("_xjo_sceneChanged", 0, 0, 0, "", "", "");
         }
@@ -108,7 +109,7 @@ namespace JayoOBSPlugin
         public void Awake()
         {
 
-            Debug.Log($"OBS is Awake!");
+            Debug.Log($"[OBS Plugin] OBS is Awake!");
             sep = new string[] { ";;" };
             _VNyanHelper = new VNyanHelper();
 
@@ -119,7 +120,7 @@ namespace JayoOBSPlugin
             mainThread = gameObject.AddComponent<MainThreadDispatcher>();
             //_VNyanHelper.registerTriggerListener(obsManager);
 
-            Debug.Log($"Loading Settings");
+            Debug.Log($"[OBS Plugin] Loading Settings");
             // Load settings
             loadPluginSettings();
             updater.CheckForUpdates();
@@ -137,7 +138,7 @@ namespace JayoOBSPlugin
             ObsTriggerHandler.setVNyanHelper(_VNyanHelper);
             triggerHandler = new ObsTriggerHandler();
             _VNyanHelper.registerTriggerListener(triggerHandler);
-            Debug.Log($"Beginning Plugin Setup");
+            Debug.Log($"[OBS Plugin] Beginning Plugin Setup");
 
 
             try
@@ -155,22 +156,18 @@ namespace JayoOBSPlugin
             if (window != null)
             {
 
-                //triggerBrowserBody = window.transform.Find("Panel/Tabs/TriggerBrowser/ScrollView").gameObject;
-                //triggerBrowserContent = window.transform.Find("Panel/Tabs/TriggerBrowser/ScrollView/Viewport/Content").gameObject;
-                //triggerBrowserSessionText = window.transform.Find("Panel/Tabs/TriggerBrowser/SessionText").gameObject;
-
                 window.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
                 window.SetActive(false);
 
-                InputField AddressInput = window.transform.Find("Panel/OBSServerInfo/AddressField").GetComponent<InputField>();
+                TMP_InputField AddressInput = window.transform.Find("Panel/OBSServerInfo/Address/AddressField").GetComponent<TMP_InputField>();
                 AddressInput?.onValueChanged.AddListener((v) => { obsManager.serverAddress = v; });
                 AddressInput?.SetTextWithoutNotify(obsManager.serverAddress);
 
-                InputField PortInput = window.transform.Find("Panel/OBSServerInfo/PortField").GetComponent<InputField>();
+                TMP_InputField PortInput = window.transform.Find("Panel/OBSServerInfo/Port/PortField").GetComponent<TMP_InputField>();
                 PortInput?.onValueChanged.AddListener((v) => { obsManager.serverPort = v; });
                 PortInput?.SetTextWithoutNotify(obsManager.serverPort);
 
-                InputField PasswordInput = window.transform.Find("Panel/OBSServerInfo/PasswordField").GetComponent<InputField>();
+                TMP_InputField PasswordInput = window.transform.Find("Panel/OBSServerInfo/Password/PasswordField").GetComponent<TMP_InputField>();
                 PasswordInput?.onValueChanged.AddListener((v) => { obsManager.serverPassword = v; });
                 PasswordInput?.SetTextWithoutNotify(obsManager.serverPassword);
 
@@ -178,7 +175,7 @@ namespace JayoOBSPlugin
 
                 try
                 {
-                    Debug.Log($"Preparing Plugin Window");
+                    Debug.Log($"[OBS Plugin] Preparing Plugin Window");
 
                     updater.PrepareUpdateUI(
                         window.transform.Find("Panel/VersionText").gameObject,
@@ -187,17 +184,17 @@ namespace JayoOBSPlugin
                     );
 
                     window.transform.Find("Panel/TitleBar/CloseButton").GetComponent<Button>().onClick.AddListener(() => { closePluginWindow(); });
-                    window.transform.Find("Panel/StatusControls/ConnectButton").GetComponent<Button>().onClick.AddListener(() => {
+                    window.transform.Find("Panel/OBSServerInfo/ConnectButton").GetComponent<Button>().onClick.AddListener(() => {
                         initObs();
                     });
-                    window.transform.Find("Panel/StatusControls/DisconnectButton").GetComponent<Button>().onClick.AddListener(() => {
+                    window.transform.Find("Panel/OBSServerInfo/DisconnectButton").GetComponent<Button>().onClick.AddListener(() => {
                         deInitObs();
                     });
 
                 }
                 catch (Exception e)
                 {
-                    Debug.Log($"Couldn't prepare Plugin Window: {e.Message}");
+                    Debug.Log($"[OBS Plugin] Couldn't prepare Plugin Window: {e.Message}");
                 }
 
                 try
@@ -364,7 +361,7 @@ namespace JayoOBSPlugin
                 string[] inputParts = inputToFetch.Split(sep, StringSplitOptions.None);
 
                 OBSWebsocketDotNet.Types.InputSettings inputSet = obsManager.obs.GetInputSettings(inputParts[0]);
-                Debug.Log(inputSet.Settings.ToString());
+                //Debug.Log(inputSet.Settings.ToString());
                 setStringParam("_xjo_inputvalue", inputSet.Settings[inputParts[1]].ToString());
 
             }
@@ -482,7 +479,7 @@ namespace JayoOBSPlugin
         {
             mainThread.Enqueue(() =>
             {
-                Text StatusTitle = window.transform.Find("Panel/StatusControls/Status Indicator").GetComponent<Text>();
+                TMP_Text StatusTitle = window.transform.Find("Panel/StatusControls/Status Indicator").GetComponent<TMP_Text>();
                 StatusTitle.text = titleText;
             });
         }

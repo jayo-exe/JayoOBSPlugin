@@ -127,7 +127,7 @@ namespace JayoOBSPlugin.OBSWebsocketDotNet
         public string GetCurrentProgramScene()
         {
             JObject response = SendRequest(nameof(GetCurrentProgramScene));
-            Debug.Log($"Response: {response.ToString()}");
+            //Debug.Log($"Response: {response.ToString()}");
             return (string)response["currentProgramSceneName"];
         }
 

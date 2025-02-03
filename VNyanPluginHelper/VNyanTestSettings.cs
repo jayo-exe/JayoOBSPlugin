@@ -40,5 +40,10 @@ namespace JayoOBSPlugin.VNyanPluginHelper
             return new Dictionary<string, string>();
         }
 
+        public string getProfilePath()
+        {
+            return "";
+        }
+
     }
 }

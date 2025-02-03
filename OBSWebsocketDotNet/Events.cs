@@ -520,9 +520,9 @@ namespace JayoOBSPlugin.OBSWebsocketDotNet
                     break;
 
                 default:
-                    var message = $"Unsupported Event: {eventType}\n{body}";
-                    Console.WriteLine(message);
-                    Debug.WriteLine(message);
+                    //var message = $"Unsupported Event: {eventType}\n{body}";
+                    //Console.WriteLine(message);
+                    //Debug.WriteLine(message);
                     break;
             }
         }

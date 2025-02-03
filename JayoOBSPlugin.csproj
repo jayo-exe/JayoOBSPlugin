@@ -1,18 +1,32 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="JayoOBSPlugin.vnobj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="JayoOBSPlugin.vnobj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Newtonsoft.Json">
       <HintPath>E:\vNyan\VNyan_Data\Managed\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>E:\vNyan\VNyan_Data\Managed\Unity.TextMeshPro.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor">
       <HintPath>E:\Unity\Editor\2020.3.40f1\Editor\Data\Managed\UnityEditor.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
       <HintPath>E:\vNyan\VNyan_Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>E:\vNyan\VNyan_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>E:\Unity\Editor\2020.3.40f1\Editor\Data\Managed\UnityEngine\UnityEngine.CoreModule.dll</HintPath>
@@ -32,16 +46,17 @@
     <Reference Include="UnityEngine.UIModule">
       <HintPath>E:\Unity\Editor\2020.3.40f1\Editor\Data\Managed\UnityEngine\UnityEngine.UIModule.dll</HintPath>
     </Reference>
-    <Reference Include="VNyanInterface">
-      <HintPath>E:\VNyan1.4.5\VNyan_Data\Managed\VNyanInterface.dll</HintPath>
-    </Reference>
     <Reference Include="websocket-sharp">
       <HintPath>E:\vNyan\VNyan_Data\Managed\websocket-sharp.dll</HintPath>
     </Reference>
+	  <Reference Include="VNyanInterface">
+		  <HintPath>E:\vNyan\VNyan_Data\Managed\VNyanInterface.dll</HintPath>
+		  <Private>False</Private>
+	  </Reference>
   </ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="copy &quot;$(TargetDir)JayoOBSPlugin.dll&quot; &quot;$(SolutionDir)..\..\..\..\VNyanPlugins\Assets\JayoObsPlugin\Plugins&quot; /Y" />
+		<Exec Command="copy &quot;$(TargetDir)JayoOBSPlugin.dll&quot; &quot;$(TargetDir)..\..\..\..\..\..\..\VNyanPlugins\Assets\JayoObsPlugin\Plugins&quot; /Y" />
 	</Target>
 
 </Project>

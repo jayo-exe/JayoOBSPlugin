@@ -65,7 +65,17 @@ namespace JayoOBSPlugin.VNyanPluginHelper
             blendshapesLastFrame.TryGetValue(name, out foundValue);
             return foundValue;
         }
-        
+
+        public void setMeshBlendshapeOverride(string name, float value)
+        {
+            return;
+        }
+
+        public void clearMeshBlendshapeOverride(string name)
+        {
+            return;
+        }
+
         public Dictionary<string, float> getBlendshapesInstant()
         {
             return blendshapes;
