@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using System.Linq;
 using JayoOBSPlugin.OBSWebsocketDotNet;
 
 namespace JayoOBSPlugin

@@ -8,9 +8,9 @@ using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace JJayoOBSPlugin.VNyanPluginHelper
+namespace JayoOBSPlugin.Util
 {
-    class VNyanPluginUpdater
+    class PluginUpdater
     {
         public event Action<string> OpenUrlRequested;
         
@@ -21,7 +21,7 @@ namespace JJayoOBSPlugin.VNyanPluginHelper
 
         private bool updateAvailable = false;
 
-        public VNyanPluginUpdater(string repoName, string currentVersion, string updateLink)
+        public PluginUpdater(string repoName, string currentVersion, string updateLink)
         {
             this.repoName = repoName;
             this.currentVersion = currentVersion;

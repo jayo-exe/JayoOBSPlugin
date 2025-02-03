@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using UnityEngine;
 
-namespace JayoOBSPlugin.VNyanPluginHelper
+namespace JayoOBSPlugin.Util
 {
     public class MainThreadDispatcher : MonoBehaviour
     {
-        private MainThreadDispatcher _instance;
+        private static MainThreadDispatcher _instance;
         private static readonly Queue<Action> _actionQueue = new Queue<Action>();
 
         private void Awake()
@@ -19,17 +18,11 @@ namespace JayoOBSPlugin.VNyanPluginHelper
             else
             {
                 _instance = this;
-                DontDestroyOnLoad(gameObject);
             }
         }
 
         private void Update()
         {
-            if (_instance == null)
-            {
-                return;
-            }
-            
             lock (_actionQueue)
             {
                 while (_actionQueue.Count > 0)
@@ -39,17 +32,23 @@ namespace JayoOBSPlugin.VNyanPluginHelper
             }
         }
 
-        public void Enqueue(Action action)
+        public static void Enqueue(Action action)
         {
-            if (_instance == null)
-            {
-                return;
-            }
+            if (_instance == null) GetInstance();
 
             lock (_actionQueue)
             {
                 _actionQueue.Enqueue(action);
             }
+        }
+
+        public static MainThreadDispatcher GetInstance()
+        {
+            if (_instance == null)
+            {
+                _instance = new GameObject("MainThreadDispatcher").AddComponent<MainThreadDispatcher>();
+            }
+            return _instance;
         }
     }
 }

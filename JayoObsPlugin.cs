@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using System.Linq.Expressions;
-using VNyanInterface;
-using JayoOBSPlugin.VNyanPluginHelper;
-using JJayoOBSPlugin.VNyanPluginHelper;
+using JayoOBSPlugin.Util;
 using TMPro;
 
 namespace JayoOBSPlugin
@@ -19,13 +14,11 @@ namespace JayoOBSPlugin
         public GameObject windowPrefab;
         public GameObject window;
 
-        public MainThreadDispatcher mainThread;
         private ObsManager obsManager;
         private ObsTriggerHandler triggerHandler;
         private string[] sep;
 
-        private VNyanHelper _VNyanHelper;
-        private VNyanPluginUpdater updater;
+        private PluginUpdater updater;
 
         private string currentVersion = "v0.4.0";
         private string repoName = "jayo-exe/JayoOBSPlugin";
@@ -111,14 +104,11 @@ namespace JayoOBSPlugin
 
             Debug.Log($"[OBS Plugin] OBS is Awake!");
             sep = new string[] { ";;" };
-            _VNyanHelper = new VNyanHelper();
 
-            updater = new VNyanPluginUpdater(repoName, currentVersion, updateLink);
-            updater.OpenUrlRequested += (url) => mainThread.Enqueue(() => { Application.OpenURL(url); });
+            updater = new PluginUpdater(repoName, currentVersion, updateLink);
+            updater.OpenUrlRequested += (url) => MainThreadDispatcher.Enqueue(() => { Application.OpenURL(url); });
 
             obsManager = gameObject.AddComponent<ObsManager>();
-            mainThread = gameObject.AddComponent<MainThreadDispatcher>();
-            //_VNyanHelper.registerTriggerListener(obsManager);
 
             Debug.Log($"[OBS Plugin] Loading Settings");
             // Load settings
@@ -135,15 +125,15 @@ namespace JayoOBSPlugin
 
 
             ObsTriggerHandler.setObsSocket(obsManager.obs);
-            ObsTriggerHandler.setVNyanHelper(_VNyanHelper);
             triggerHandler = new ObsTriggerHandler();
-            _VNyanHelper.registerTriggerListener(triggerHandler);
+            VNyanInterface.VNyanInterface.VNyanTrigger.registerTriggerListener(triggerHandler);
             Debug.Log($"[OBS Plugin] Beginning Plugin Setup");
 
 
             try
             {
-                window = _VNyanHelper.pluginSetup(this, "Jayo's OBS Plugin", windowPrefab);
+                VNyanInterface.VNyanInterface.VNyanUI.registerPluginButton("Jayo's OBS Plugin", this);
+                window = (GameObject)VNyanInterface.VNyanInterface.VNyanUI.instantiateUIPrefab(windowPrefab);
             }
             catch (Exception e)
             {
@@ -211,20 +201,26 @@ namespace JayoOBSPlugin
 
         }
 
+        private string getVNyanParameterString(string name) => VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterString(name);
+        private float getVNyanParameterFloat(string name) => VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(name);
+        private void setVNyanParameterString(string name, string value) => VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterString(name, value);
+        private void setVNyanParameterFloat(string name, float value) => VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(name, value);
+
+
         private void Update()
         {
             if (!obsManager.isConnected()) return;
 
             //check for items to handle
             //scene to switch
-            string sceneToSwitch = _VNyanHelper.getVNyanParameterString("_xjo_scenetoswitch");
+            string sceneToSwitch = getVNyanParameterString("_xjo_scenetoswitch");
             if (sceneToSwitch != "")
             {
                 setStringParam("_xjo_scenetoswitch", "");
                 obsManager.obs.SetCurrentProgramScene(sceneToSwitch);
             }
             //Hotkey name to activate
-            string hotkeyToFire = _VNyanHelper.getVNyanParameterString("_xjo_hotkeytofire");
+            string hotkeyToFire = getVNyanParameterString("_xjo_hotkeytofire");
             if (hotkeyToFire != "")
             {
                 setStringParam("_xjo_hotkeytofire", "");
@@ -232,7 +228,7 @@ namespace JayoOBSPlugin
             }
 
             //audio input to mute
-            string audioToMute = _VNyanHelper.getVNyanParameterString("_xjo_audiotomute");
+            string audioToMute = getVNyanParameterString("_xjo_audiotomute");
             if (audioToMute != "")
             {
                 setStringParam("_xjo_audiotomute", "");
@@ -240,7 +236,7 @@ namespace JayoOBSPlugin
             }
 
             //audio input to unmute
-            string audioToUnmute = _VNyanHelper.getVNyanParameterString("_xjo_audiotounmute");
+            string audioToUnmute = getVNyanParameterString("_xjo_audiotounmute");
             if (audioToUnmute != "")
             {
                 setStringParam("_xjo_audiotounmute", "");
@@ -249,7 +245,7 @@ namespace JayoOBSPlugin
             }
 
             //audio input to set volume
-            string audioToSet = _VNyanHelper.getVNyanParameterString("_xjo_audiotoset");
+            string audioToSet = getVNyanParameterString("_xjo_audiotoset");
             if (audioToSet != "")
             {
                 setStringParam("_xjo_audiotoset", "");
@@ -259,7 +255,7 @@ namespace JayoOBSPlugin
             }
 
             //item to enable
-            string itemToEnable = _VNyanHelper.getVNyanParameterString("_xjo_itemtoenable");
+            string itemToEnable = getVNyanParameterString("_xjo_itemtoenable");
             if (itemToEnable != "")
             {
                 setStringParam("_xjo_itemtoenable", "");
@@ -270,7 +266,7 @@ namespace JayoOBSPlugin
             }
 
             //item to disable
-            string itemToDisable = _VNyanHelper.getVNyanParameterString("_xjo_itemtodisable");
+            string itemToDisable = getVNyanParameterString("_xjo_itemtodisable");
             if (itemToDisable != "")
             {
                 setStringParam("_xjo_itemtodisable", "");
@@ -281,7 +277,7 @@ namespace JayoOBSPlugin
             }
 
             //filter to enable
-            string filterToEnable = _VNyanHelper.getVNyanParameterString("_xjo_filtertoenable");
+            string filterToEnable = getVNyanParameterString("_xjo_filtertoenable");
             if (filterToEnable != "")
             {
                 setStringParam("_xjo_filtertoenable", "");
@@ -291,7 +287,7 @@ namespace JayoOBSPlugin
             }
 
             //filter to disable
-            string filterToDisable = _VNyanHelper.getVNyanParameterString("_xjo_filtertodisable");
+            string filterToDisable = getVNyanParameterString("_xjo_filtertodisable");
             if (filterToDisable != "")
             {
                 setStringParam("_xjo_filtertodisable", "");
@@ -301,7 +297,7 @@ namespace JayoOBSPlugin
             }
 
             //Start Virtual Cam
-            float startVirtualCam = _VNyanHelper.getVNyanParameterFloat("_xjo_startvcam");
+            float startVirtualCam = getVNyanParameterFloat("_xjo_startvcam");
             if (startVirtualCam == 1)
             {
                 setFloatParam("_xjo_startvcam", 0);
@@ -310,7 +306,7 @@ namespace JayoOBSPlugin
             }
 
             //Stop Virtual Cam
-            float stopVirtualCam = _VNyanHelper.getVNyanParameterFloat("_xjo_stopvcam");
+            float stopVirtualCam = getVNyanParameterFloat("_xjo_stopvcam");
             if (stopVirtualCam == 1)
             {
                 setFloatParam("_xjo_stopvcam", 0);
@@ -319,7 +315,7 @@ namespace JayoOBSPlugin
             }
 
             //Start Record
-            float startRecord = _VNyanHelper.getVNyanParameterFloat("_xjo_startrecord");
+            float startRecord = getVNyanParameterFloat("_xjo_startrecord");
             if (startRecord == 1)
             {
                 setFloatParam("_xjo_startrecord", 0);
@@ -328,7 +324,7 @@ namespace JayoOBSPlugin
             }
 
             //Stop Record
-            float stopRecord = _VNyanHelper.getVNyanParameterFloat("_xjo_stoprecord");
+            float stopRecord = getVNyanParameterFloat("_xjo_stoprecord");
             if (stopRecord == 1)
             {
                 setFloatParam("_xjo_stoprecord", 0);
@@ -337,7 +333,7 @@ namespace JayoOBSPlugin
             }
 
             //Start Stream
-            float startStream = _VNyanHelper.getVNyanParameterFloat("_xjo_startstream");
+            float startStream = getVNyanParameterFloat("_xjo_startstream");
             if (startStream == 1)
             {
                 setFloatParam("_xjo_startstream", 0);
@@ -346,7 +342,7 @@ namespace JayoOBSPlugin
             }
 
             //Stop Stream
-            float stopStream = _VNyanHelper.getVNyanParameterFloat("_xjo_stopstream");
+            float stopStream = getVNyanParameterFloat("_xjo_stopstream");
             if (stopStream == 1)
             {
                 setFloatParam("_xjo_stopstream", 0);
@@ -354,7 +350,7 @@ namespace JayoOBSPlugin
             }
 
             //Input to fetch settings for
-            string inputToFetch = _VNyanHelper.getVNyanParameterString("_xjo_inputtofetch");
+            string inputToFetch = getVNyanParameterString("_xjo_inputtofetch");
             if (inputToFetch != "")
             {
                 setStringParam("_xjo_inputtofetch", "");
@@ -367,8 +363,8 @@ namespace JayoOBSPlugin
             }
 
             //Input to change settings for
-            string inputToUpdate = _VNyanHelper.getVNyanParameterString("_xjo_inputtoupdate");
-            string inputNewValue = _VNyanHelper.getVNyanParameterString("_xjo_inputnewvalue");
+            string inputToUpdate = getVNyanParameterString("_xjo_inputtoupdate");
+            string inputNewValue = getVNyanParameterString("_xjo_inputnewvalue");
             if (inputToUpdate != "")
             {
                 setStringParam("_xjo_inputtoupdate", "");
@@ -407,7 +403,7 @@ namespace JayoOBSPlugin
                 deInitObs();
                 return;
             }
-            mainThread.Enqueue(() => {
+            MainThreadDispatcher.Enqueue(() => {
                 obsManager.initObs();
                 window.transform.Find("Panel/StatusControls/ConnectButton").gameObject.SetActive(false);
                 window.transform.Find("Panel/StatusControls/DisconnectButton").gameObject.SetActive(true);
@@ -416,7 +412,7 @@ namespace JayoOBSPlugin
 
         public void deInitObs()
         {
-            mainThread.Enqueue(() => {
+            MainThreadDispatcher.Enqueue(() => {
                 obsManager.deInitObs();
                 window.transform.Find("Panel/StatusControls/ConnectButton").gameObject.SetActive(true);
                 window.transform.Find("Panel/StatusControls/DisconnectButton").gameObject.SetActive(false);
@@ -432,7 +428,7 @@ namespace JayoOBSPlugin
         public void loadPluginSettings()
         {
             // Get settings in dictionary
-            Dictionary<string, string> settings = _VNyanHelper.loadPluginSettingsData("JayoOBSPlugin.cfg");
+            Dictionary<string, string> settings = VNyanInterface.VNyanInterface.VNyanSettings.loadSettings("JayoOBSPlugin.cfg");
             if (settings != null)
             {
                 // Read string value
@@ -455,7 +451,7 @@ namespace JayoOBSPlugin
             settings["OBSServerPort"] = obsManager.serverPort;
             settings["OBSServerPassword"] = obsManager.serverPassword;
 
-            _VNyanHelper.savePluginSettingsData("JayoOBSPlugin.cfg", settings);
+            VNyanInterface.VNyanInterface.VNyanSettings.saveSettings("JayoOBSPlugin.cfg", settings);
         }
 
         public void pluginButtonClicked()
@@ -477,7 +473,7 @@ namespace JayoOBSPlugin
 
         public void setStatusTitle(string titleText)
         {
-            mainThread.Enqueue(() =>
+            MainThreadDispatcher.Enqueue(() =>
             {
                 TMP_Text StatusTitle = window.transform.Find("Panel/StatusControls/Status Indicator").GetComponent<TMP_Text>();
                 StatusTitle.text = titleText;
@@ -486,33 +482,33 @@ namespace JayoOBSPlugin
 
         public void setStringParam(string paramName, string value)
         {
-            mainThread.Enqueue(() =>
+            MainThreadDispatcher.Enqueue(() =>
             {
-                _VNyanHelper.setVNyanParameterString(paramName, value);
+                setVNyanParameterString(paramName, value);
             });
         }
 
         public void setFloatParam(string paramName, float value)
         {
-            mainThread.Enqueue(() =>
+            MainThreadDispatcher.Enqueue(() =>
             {
-                _VNyanHelper.setVNyanParameterFloat(paramName, value);
+                setVNyanParameterFloat(paramName, value);
             });
         }
 
         public void callTrigger(string triggerName, int value1, int value2, int value3, string text1, string text2, string text3)
         {
-            mainThread.Enqueue(() =>
+            MainThreadDispatcher.Enqueue(() =>
             {
-                _VNyanHelper.callTrigger(triggerName, value1, value2, value3, text1, text2, text3);
+                callTrigger(triggerName, value1, value2, value3, text1, text2, text3);
             });
         }
 
         public void callSimpleTrigger(string triggerName)
         {
-            mainThread.Enqueue(() =>
+            MainThreadDispatcher.Enqueue(() =>
             {
-                _VNyanHelper.callTrigger(triggerName, 0, 0, 0, "", "", "");
+                callTrigger(triggerName, 0, 0, 0, "", "", "");
             });
         }
 
