@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using System.Linq.Expressions;
+using VNyanInterface;
 using JayoOBSPlugin.Util;
 using TMPro;
 
@@ -20,7 +24,14 @@ namespace JayoOBSPlugin
 
         private PluginUpdater updater;
 
-        private string currentVersion = "v0.4.0";
+        private TMP_InputField AddressInput;
+        private TMP_InputField PortInput;
+        private TMP_InputField PasswordInput;
+        private Button ConnectButton;
+        private Button DisconnectButton;
+        private TMP_Text StatusText;
+
+        private string currentVersion = "v0.3.0";
         private string repoName = "jayo-exe/JayoOBSPlugin";
         private string updateLink = "https://jayo-exe.itch.io/obs-plugin-for-vnyan";
 
@@ -30,7 +41,7 @@ namespace JayoOBSPlugin
 
         private void OnObsSceneChanged(object sender, OBSWebsocketDotNet.Types.Events.ProgramSceneChangedEventArgs e)
         {
-            //Debug.Log("[OBS Plugin] Scene changed");
+            Debug.Log("[OBS Plugin] Scene changed");
             setStringParam("_xjo_currentScene", e.SceneName);
             callTrigger("_xjo_sceneChanged", 0, 0, 0, "", "", "");
         }
@@ -102,7 +113,7 @@ namespace JayoOBSPlugin
         public void Awake()
         {
 
-            Debug.Log($"[OBS Plugin] OBS is Awake!");
+            Debug.Log($"OBS is Awake!");
             sep = new string[] { ";;" };
 
             updater = new PluginUpdater(repoName, currentVersion, updateLink);
@@ -110,7 +121,7 @@ namespace JayoOBSPlugin
 
             obsManager = gameObject.AddComponent<ObsManager>();
 
-            Debug.Log($"[OBS Plugin] Loading Settings");
+            Debug.Log($"Loading Settings");
             // Load settings
             loadPluginSettings();
             updater.CheckForUpdates();
@@ -127,7 +138,7 @@ namespace JayoOBSPlugin
             ObsTriggerHandler.setObsSocket(obsManager.obs);
             triggerHandler = new ObsTriggerHandler();
             VNyanInterface.VNyanInterface.VNyanTrigger.registerTriggerListener(triggerHandler);
-            Debug.Log($"[OBS Plugin] Beginning Plugin Setup");
+            Debug.Log($"Beginning Plugin Setup");
 
 
             try
@@ -146,26 +157,26 @@ namespace JayoOBSPlugin
             if (window != null)
             {
 
+                //triggerBrowserBody = window.transform.Find("Panel/Tabs/TriggerBrowser/ScrollView").gameObject;
+                //triggerBrowserContent = window.transform.Find("Panel/Tabs/TriggerBrowser/ScrollView/Viewport/Content").gameObject;
+                //triggerBrowserSessionText = window.transform.Find("Panel/Tabs/TriggerBrowser/SessionText").gameObject;
+
                 window.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
                 window.SetActive(false);
 
-                TMP_InputField AddressInput = window.transform.Find("Panel/OBSServerInfo/Address/AddressField").GetComponent<TMP_InputField>();
-                AddressInput?.onValueChanged.AddListener((v) => { obsManager.serverAddress = v; });
-                AddressInput?.SetTextWithoutNotify(obsManager.serverAddress);
+                AddressInput = window.transform.Find("Panel/OBSServerInfo/Address/AddressField").GetComponent<TMP_InputField>();
+                PortInput = window.transform.Find("Panel/OBSServerInfo/Port/PortField").GetComponent<TMP_InputField>();
+                PasswordInput = window.transform.Find("Panel/OBSServerInfo/Password/PasswordField").GetComponent<TMP_InputField>();
+                ConnectButton = window.transform.Find("Panel/OBSServerInfo/ConnectButton").GetComponent<Button>();
+                DisconnectButton = window.transform.Find("Panel/OBSServerInfo/DisconnectButton").GetComponent<Button>();
+                StatusText = window.transform.Find("Panel/StatusControls/Status Indicator").GetComponent<TMP_Text>();
 
-                TMP_InputField PortInput = window.transform.Find("Panel/OBSServerInfo/Port/PortField").GetComponent<TMP_InputField>();
-                PortInput?.onValueChanged.AddListener((v) => { obsManager.serverPort = v; });
-                PortInput?.SetTextWithoutNotify(obsManager.serverPort);
-
-                TMP_InputField PasswordInput = window.transform.Find("Panel/OBSServerInfo/Password/PasswordField").GetComponent<TMP_InputField>();
-                PasswordInput?.onValueChanged.AddListener((v) => { obsManager.serverPassword = v; });
-                PasswordInput?.SetTextWithoutNotify(obsManager.serverPassword);
 
                 setStatusTitle("Initializing");
 
                 try
                 {
-                    Debug.Log($"[OBS Plugin] Preparing Plugin Window");
+                    Debug.Log($"Preparing Plugin Window");
 
                     updater.PrepareUpdateUI(
                         window.transform.Find("Panel/VersionText").gameObject,
@@ -173,18 +184,27 @@ namespace JayoOBSPlugin
                         window.transform.Find("Panel/UpdateButton").gameObject
                     );
 
+                    AddressInput?.onValueChanged.AddListener((v) => { obsManager.serverAddress = v; });
+                    AddressInput?.SetTextWithoutNotify(obsManager.serverAddress);
+                    
+                    PortInput?.onValueChanged.AddListener((v) => { obsManager.serverPort = v; });
+                    PortInput?.SetTextWithoutNotify(obsManager.serverPort);
+                    
+                    PasswordInput?.onValueChanged.AddListener((v) => { obsManager.serverPassword = v; });
+                    PasswordInput?.SetTextWithoutNotify(obsManager.serverPassword);
+
                     window.transform.Find("Panel/TitleBar/CloseButton").GetComponent<Button>().onClick.AddListener(() => { closePluginWindow(); });
-                    window.transform.Find("Panel/OBSServerInfo/ConnectButton").GetComponent<Button>().onClick.AddListener(() => {
+                    ConnectButton.onClick.AddListener(() => {
                         initObs();
                     });
-                    window.transform.Find("Panel/OBSServerInfo/DisconnectButton").GetComponent<Button>().onClick.AddListener(() => {
+                    DisconnectButton.onClick.AddListener(() => {
                         deInitObs();
                     });
 
                 }
                 catch (Exception e)
                 {
-                    Debug.Log($"[OBS Plugin] Couldn't prepare Plugin Window: {e.Message}");
+                    Debug.Log($"Couldn't prepare Plugin Window: {e.Message}");
                 }
 
                 try
@@ -201,11 +221,11 @@ namespace JayoOBSPlugin
 
         }
 
-        private string getVNyanParameterString(string name) => VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterString(name);
-        private float getVNyanParameterFloat(string name) => VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(name);
-        private void setVNyanParameterString(string name, string value) => VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterString(name, value);
-        private void setVNyanParameterFloat(string name, float value) => VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(name, value);
+        private string getVNyanParameterString(string name) { return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterString(name); }
+        private float getVNyanParameterFloat(string name) { return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(name); }
 
+        private void setVNyanParameterString(string name, string value) { VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterString(name, value); }
+        private void setVNyanParameterFloat(string name, float value) { VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(name, value); }
 
         private void Update()
         {
@@ -357,7 +377,7 @@ namespace JayoOBSPlugin
                 string[] inputParts = inputToFetch.Split(sep, StringSplitOptions.None);
 
                 OBSWebsocketDotNet.Types.InputSettings inputSet = obsManager.obs.GetInputSettings(inputParts[0]);
-                //Debug.Log(inputSet.Settings.ToString());
+                Debug.Log(inputSet.Settings.ToString());
                 setStringParam("_xjo_inputvalue", inputSet.Settings[inputParts[1]].ToString());
 
             }
@@ -405,8 +425,8 @@ namespace JayoOBSPlugin
             }
             MainThreadDispatcher.Enqueue(() => {
                 obsManager.initObs();
-                window.transform.Find("Panel/StatusControls/ConnectButton").gameObject.SetActive(false);
-                window.transform.Find("Panel/StatusControls/DisconnectButton").gameObject.SetActive(true);
+                ConnectButton.gameObject.SetActive(false);
+                DisconnectButton.gameObject.SetActive(true);
             });
         }
 
@@ -414,8 +434,8 @@ namespace JayoOBSPlugin
         {
             MainThreadDispatcher.Enqueue(() => {
                 obsManager.deInitObs();
-                window.transform.Find("Panel/StatusControls/ConnectButton").gameObject.SetActive(true);
-                window.transform.Find("Panel/StatusControls/DisconnectButton").gameObject.SetActive(false);
+                ConnectButton.gameObject.SetActive(true);
+                DisconnectButton.gameObject.SetActive(false);
             });
         }
 
@@ -475,8 +495,7 @@ namespace JayoOBSPlugin
         {
             MainThreadDispatcher.Enqueue(() =>
             {
-                TMP_Text StatusTitle = window.transform.Find("Panel/StatusControls/Status Indicator").GetComponent<TMP_Text>();
-                StatusTitle.text = titleText;
+                StatusText.text = titleText;
             });
         }
 
@@ -500,7 +519,7 @@ namespace JayoOBSPlugin
         {
             MainThreadDispatcher.Enqueue(() =>
             {
-                callTrigger(triggerName, value1, value2, value3, text1, text2, text3);
+                VNyanInterface.VNyanInterface.VNyanTrigger.callTrigger(triggerName, value1, value2, value3, text1, text2, text3);
             });
         }
 

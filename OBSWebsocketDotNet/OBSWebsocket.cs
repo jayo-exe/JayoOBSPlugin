@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using WebSocketSharp;
 using JayoOBSPlugin.OBSWebsocketDotNet.Communication;
+using UnityEngine;
 
 namespace JayoOBSPlugin.OBSWebsocketDotNet
 {
@@ -136,7 +137,7 @@ namespace JayoOBSPlugin.OBSWebsocketDotNet
 
         private void OnWebsocketError(object sender, ErrorEventArgs e)
         {
-            
+            Debug.Log("Some error happened");
         }
 
         private void OnWebsocketConnect(object sender, EventArgs e)

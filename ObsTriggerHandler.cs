@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 using JayoOBSPlugin.OBSWebsocketDotNet;
+using UnityEngine;
 using System.Globalization;
 
 namespace JayoOBSPlugin
@@ -30,12 +33,16 @@ namespace JayoOBSPlugin
             ["set_input_setting"] = handleSetInputSettingRequest,
             ["get_filter_setting"] = handleGetFilterSettingRequest,
             ["set_filter_setting"] = handleSetFilterSettingRequest,
+
         };
 
-        private static string getVNyanParameterString(string name) => VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterString(name);
-        private static float getVNyanParameterFloat(string name) => VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(name);
+        private static string getVNyanParameterString(string name) { return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterString(name); }
+        private static float getVNyanParameterFloat(string name) { return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(name); }
 
-        private static string parseStringArgument(string arg)
+        private static void setVNyanParameterString(string name, string value) { VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterString(name, value); }
+        private static void setVNyanParameterFloat(string name, float value) { VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(name, value); }
+
+        public static string parseStringArgument(string arg)
         {
             if (arg.StartsWith("<") && arg.EndsWith(">"))
             {
@@ -44,18 +51,21 @@ namespace JayoOBSPlugin
             return arg;
         }
 
-        private static float parseFloatArgument(string arg)
+        public static float parseFloatArgument(string arg)
         {
             if (arg.StartsWith("[") && arg.EndsWith("]"))
             {
+                //float param, just get and return the value directly
                 return getVNyanParameterFloat(arg.Substring(1, arg.Length - 2));
             }
 
             if (arg.StartsWith("<") && arg.EndsWith(">"))
             {
+                //string param, set arg to the value from the parameters list before parsing
                 arg = getVNyanParameterString(arg.Substring(1, arg.Length - 2));
             }
 
+            //parse the value of arg into a float
             float returnVal = 0f;
             float.TryParse(arg, NumberStyles.Any, CultureInfo.InvariantCulture, out returnVal);
             return returnVal;
@@ -191,7 +201,7 @@ namespace JayoOBSPlugin
             string targetParameterName = parseStringArgument(text3);
 
             OBSWebsocketDotNet.Types.InputSettings inputSet = obs.GetInputSettings(inputName);
-            //Debug.Log(obs.GetInputDefaultSettings(inputSet.InputKind).ToString());
+            Debug.Log(obs.GetInputDefaultSettings(inputSet.InputKind).ToString());
             JObject baseSettings = obs.GetInputDefaultSettings(inputSet.InputKind).ToObject<JObject>();
             baseSettings.Merge(inputSet.Settings);
 

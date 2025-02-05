@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using System.Linq;
 using JayoOBSPlugin.OBSWebsocketDotNet;
 
 namespace JayoOBSPlugin
@@ -22,7 +24,7 @@ namespace JayoOBSPlugin
 
         private void Awake()
         {
-            Debug.Log("[OBS Plugin] OBS Manager Awake");
+            Debug.Log("OBS Manager Awake");
             serverAddress = "127.0.0.1";
             serverPort = "4455";
             serverPassword = "";
@@ -36,7 +38,7 @@ namespace JayoOBSPlugin
         {
             if (state == PlayModeStateChange.ExitingPlayMode)
             {
-                Debug.Log("[OBS Plugin] Exiting Play Mode");
+                Debug.Log("Exiting Play Mode");
                 deInitObs();
             }
         }
@@ -59,7 +61,7 @@ namespace JayoOBSPlugin
         private void OnObsDisconnect(object sender, OBSWebsocketDotNet.Communication.ObsDisconnectionInfo e)
         {
             connected = false;
-            Debug.Log($"[OBS Plugin] obs disconnected: {e.ObsCloseCode} ; {e.DisconnectReason}");
+            Debug.Log($"obs disconnected: {e.ObsCloseCode} ; {e.DisconnectReason}");
         }
 
         public void initObs()
