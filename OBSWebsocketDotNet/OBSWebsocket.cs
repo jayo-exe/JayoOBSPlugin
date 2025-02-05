@@ -137,7 +137,7 @@ namespace JayoOBSPlugin.OBSWebsocketDotNet
 
         private void OnWebsocketError(object sender, ErrorEventArgs e)
         {
-            Debug.Log("Some error happened");
+            //Debug.Log("Some error happened");
         }
 
         private void OnWebsocketConnect(object sender, EventArgs e)

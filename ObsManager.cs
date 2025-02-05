@@ -7,24 +7,20 @@ using JayoOBSPlugin.OBSWebsocketDotNet;
 
 namespace JayoOBSPlugin
 {
-    public class ObsManager : MonoBehaviour
+    public static class ObsManager
     {
+        private static bool connected;
 
-        public OBSWebsocket obs;
-        private bool connected;
-        
-        public string serverAddress;
-        public string serverPort;
-        public string serverPassword;
+        public static OBSWebsocket obs;
+        public static string serverAddress;
+        public static string serverPort;
+        public static string serverPassword;
 
-        private void Start()
+        public static bool isConnected {  get { return connected; } }
+
+        static ObsManager()
         {
-
-        }
-
-        private void Awake()
-        {
-            Debug.Log("OBS Manager Awake");
+            Logger.LogInfo("OBS Manager Awake");
             serverAddress = "127.0.0.1";
             serverPort = "4455";
             serverPassword = "";
@@ -34,52 +30,27 @@ namespace JayoOBSPlugin
             obs.Disconnected += OnObsDisconnect;
         }
 
-        private void ModeChanged(PlayModeStateChange state)
-        {
-            if (state == PlayModeStateChange.ExitingPlayMode)
-            {
-                Debug.Log("Exiting Play Mode");
-                deInitObs();
-            }
-        }
-
-        private void OnDestroy()
-        {
-            deInitObs();
-        }
-
-        private void OnApplicationQuit()
-        {
-            deInitObs();
-        }
-
-        private void OnObsConnect(object sender, EventArgs e)
+        private static void OnObsConnect(object sender, EventArgs e)
         {
             connected = true;
         }
 
-        private void OnObsDisconnect(object sender, OBSWebsocketDotNet.Communication.ObsDisconnectionInfo e)
+        private static void OnObsDisconnect(object sender, OBSWebsocketDotNet.Communication.ObsDisconnectionInfo e)
         {
             connected = false;
-            Debug.Log($"obs disconnected: {e.ObsCloseCode} ; {e.DisconnectReason}");
+            Logger.LogInfo($"obs disconnected: {e.ObsCloseCode} ; {e.DisconnectReason}");
         }
 
-        public void initObs()
+        public static void initObs()
         {
             if(connected) { return; }
             obs.ConnectAsync($"ws://{serverAddress}:{serverPort}", serverPassword);
         }
         
-        public void deInitObs()
+        public static void deInitObs()
         {
             if (!connected) { return; }
             obs.Disconnect();
         }
-
-        public bool isConnected()
-        {
-            return connected;
-        }
-
     }
 }

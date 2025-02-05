@@ -11,7 +11,6 @@ namespace JayoOBSPlugin
 {
     class ObsTriggerHandler : VNyanInterface.ITriggerHandler
     {
-        private static OBSWebsocket obs;
         private static Dictionary<string, Action<int, int, int, string, string, string>> actionHandlers = new Dictionary<string, Action<int, int, int, string, string, string>>
         {
             ["switch_scene"] = handleSceneSwitchRequest,
@@ -36,10 +35,22 @@ namespace JayoOBSPlugin
 
         };
 
+        public void triggerCalled(string triggerName, int value1, int value2, int value3, string text1, string text2, string text3)
+        {
+            if (!triggerName.StartsWith("_xjo_")) return;
+            if (ObsManager.obs == null) return;
+            if (!ObsManager.isConnected) return;
+
+            string triggerAction = triggerName.Substring(5);
+            if (actionHandlers.ContainsKey(triggerAction)) actionHandlers[triggerAction](value1, value2, value3, text1, text2, text3);
+        }
+
         private static string getVNyanParameterString(string name) { return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterString(name); }
+        
         private static float getVNyanParameterFloat(string name) { return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterFloat(name); }
 
         private static void setVNyanParameterString(string name, string value) { VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterString(name, value); }
+        
         private static void setVNyanParameterFloat(string name, float value) { VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterFloat(name, value); }
 
         public static string parseStringArgument(string arg)
@@ -73,45 +84,35 @@ namespace JayoOBSPlugin
 
         public static void setObsSocket(OBSWebsocket socket)
         {
-            obs = socket;
-        }
-
-        public void triggerCalled(string triggerName, int value1, int value2, int value3, string text1, string text2, string text3)
-        {
-            if (!triggerName.StartsWith("_xjo_")) return;
-            if (obs == null) return;
-            if (!obs.IsConnected) return;
-
-            string triggerAction = triggerName.Substring(5);
-            if(actionHandlers.ContainsKey(triggerAction)) actionHandlers[triggerAction](value1, value2, value3, text1, text2, text3);
+            ObsManager.obs = socket;
         }
 
         public static void handleSceneSwitchRequest(int value1, int value2, int value3, string text1, string text2, string text3)
         {
             string newSceneName = parseStringArgument(text1);
 
-            obs.SetCurrentProgramScene(newSceneName);
+            ObsManager.obs.SetCurrentProgramScene(newSceneName);
         }
 
         public static void handleFireHotkeyRequest(int value1, int value2, int value3, string text1, string text2, string text3)
         {
             string hotkeyName = parseStringArgument(text1);
 
-            obs.TriggerHotkeyByName(hotkeyName);
+            ObsManager.obs.TriggerHotkeyByName(hotkeyName);
         }
 
         public static void handleAudioMuteRequest(int value1, int value2, int value3, string text1, string text2, string text3)
         {
             string audioSourceName = parseStringArgument(text1);
 
-            obs.SetInputMute(audioSourceName, true);
+            ObsManager.obs.SetInputMute(audioSourceName, true);
         }
 
         public static void handleAudioUnmuteRequest(int value1, int value2, int value3, string text1, string text2, string text3)
         {
             string audioSourceName = parseStringArgument(text1);
 
-            obs.SetInputMute(audioSourceName, false);
+            ObsManager.obs.SetInputMute(audioSourceName, false);
         }
 
         public static void handleAudioSetVolumeRequest(int value1, int value2, int value3, string text1, string text2, string text3)
@@ -119,7 +120,7 @@ namespace JayoOBSPlugin
             string audioSourceName = parseStringArgument(text1);
             float newVolume = parseFloatArgument(text3);
 
-            obs.SetInputVolume(audioSourceName, newVolume);
+            ObsManager.obs.SetInputVolume(audioSourceName, newVolume);
         }
 
         public static void handleItemEnableRequest(int value1, int value2, int value3, string text1, string text2, string text3)
@@ -129,8 +130,8 @@ namespace JayoOBSPlugin
             string sceneName = targetParts[0];
             string sourceName = targetParts[1];
 
-            int itemId = obs.GetSceneItemId(sceneName, sourceName, 0);
-            obs.SetSceneItemEnabled(sceneName, itemId, true);
+            int itemId = ObsManager.obs.GetSceneItemId(sceneName, sourceName, 0);
+            ObsManager.obs.SetSceneItemEnabled(sceneName, itemId, true);
         }
 
         public static void handleItemDisableRequest(int value1, int value2, int value3, string text1, string text2, string text3)
@@ -140,8 +141,8 @@ namespace JayoOBSPlugin
             string sceneName = targetParts[0];
             string sourceName = targetParts[1];
 
-            int itemId = obs.GetSceneItemId(sceneName, sourceName, 0);
-            obs.SetSceneItemEnabled(sceneName, itemId, false);
+            int itemId = ObsManager.obs.GetSceneItemId(sceneName, sourceName, 0);
+            ObsManager.obs.SetSceneItemEnabled(sceneName, itemId, false);
         }
 
         public static void handleSourceFilterEnableRequest(int value1, int value2, int value3, string text1, string text2, string text3)
@@ -151,7 +152,7 @@ namespace JayoOBSPlugin
             string sourceName = targetParts[0];
             string filterName = targetParts[1];
 
-            obs.SetSourceFilterEnabled(sourceName, filterName, true);
+            ObsManager.obs.SetSourceFilterEnabled(sourceName, filterName, true);
         }
 
         public static void handleSourceFilterDisableRequest(int value1, int value2, int value3, string text1, string text2, string text3)
@@ -161,37 +162,37 @@ namespace JayoOBSPlugin
             string sourceName = targetParts[0];
             string filterName = targetParts[1];
 
-            obs.SetSourceFilterEnabled(sourceName, filterName, false);
+            ObsManager.obs.SetSourceFilterEnabled(sourceName, filterName, false);
         }
 
         public static void handleVCamStartRequest(int value1, int value2, int value3, string text1, string text2, string text3)
         {
-            obs.StartVirtualCam();
+            ObsManager.obs.StartVirtualCam();
         }
 
         public static void handleVCamStopRequest(int value1, int value2, int value3, string text1, string text2, string text3)
         {
-            obs.StopVirtualCam();
+            ObsManager.obs.StopVirtualCam();
         }
 
         public static void handleRecordStartRequest(int value1, int value2, int value3, string text1, string text2, string text3)
         {
-            obs.StartRecord();
+            ObsManager.obs.StartRecord();
         }
 
         public static void handleRecordStopRequest(int value1, int value2, int value3, string text1, string text2, string text3)
         {
-            obs.StopRecord();
+            ObsManager.obs.StopRecord();
         }
 
         public static void handleStreamStartRequest(int value1, int value2, int value3, string text1, string text2, string text3)
         {
-            obs.StartStream();
+            ObsManager.obs.StartStream();
         }
 
         public static void handleStreamStopRequest(int value1, int value2, int value3, string text1, string text2, string text3)
         {
-            obs.StopStream();
+            ObsManager.obs.StopStream();
         }
 
         public static void handleGetInputSettingRequest(int value1, int value2, int value3, string text1, string text2, string text3)
@@ -200,9 +201,9 @@ namespace JayoOBSPlugin
             string settingName = parseStringArgument(text2);
             string targetParameterName = parseStringArgument(text3);
 
-            OBSWebsocketDotNet.Types.InputSettings inputSet = obs.GetInputSettings(inputName);
-            Debug.Log(obs.GetInputDefaultSettings(inputSet.InputKind).ToString());
-            JObject baseSettings = obs.GetInputDefaultSettings(inputSet.InputKind).ToObject<JObject>();
+            OBSWebsocketDotNet.Types.InputSettings inputSet = ObsManager.obs.GetInputSettings(inputName);
+            Logger.LogInfo(ObsManager.obs.GetInputDefaultSettings(inputSet.InputKind).ToString());
+            JObject baseSettings = ObsManager.obs.GetInputDefaultSettings(inputSet.InputKind).ToObject<JObject>();
             baseSettings.Merge(inputSet.Settings);
 
             VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterString(targetParameterName, baseSettings[settingName].ToString());
@@ -215,8 +216,8 @@ namespace JayoOBSPlugin
             string settingName = parseStringArgument(text2);
             string newValue = parseStringArgument(text3);
 
-            OBSWebsocketDotNet.Types.InputSettings inputSet = obs.GetInputSettings(inputName);
-            JObject baseSettings = obs.GetInputDefaultSettings(inputSet.InputKind).ToObject<JObject>();
+            OBSWebsocketDotNet.Types.InputSettings inputSet = ObsManager.obs.GetInputSettings(inputName);
+            JObject baseSettings = ObsManager.obs.GetInputDefaultSettings(inputSet.InputKind).ToObject<JObject>();
             baseSettings.Merge(inputSet.Settings);
 
             switch (baseSettings[settingName].Type)
@@ -236,7 +237,7 @@ namespace JayoOBSPlugin
             }
 
             inputSet.Settings.Merge(baseSettings);
-            obs.SetInputSettings(inputSet);
+            ObsManager.obs.SetInputSettings(inputSet);
         }
 
         public static void handleGetFilterSettingRequest(int value1, int value2, int value3, string text1, string text2, string text3)
@@ -249,8 +250,8 @@ namespace JayoOBSPlugin
             string targetParameterName = parseStringArgument(text3);
 
 
-            OBSWebsocketDotNet.Types.FilterSettings filterSet = obs.GetSourceFilter(sourceName, filterName);
-            JObject baseSettings = obs.GetSourceFilterDefaultSettings(filterSet.Kind)["defaultFilterSettings"].ToObject<JObject>();
+            OBSWebsocketDotNet.Types.FilterSettings filterSet = ObsManager.obs.GetSourceFilter(sourceName, filterName);
+            JObject baseSettings = ObsManager.obs.GetSourceFilterDefaultSettings(filterSet.Kind)["defaultFilterSettings"].ToObject<JObject>();
             baseSettings.Merge(filterSet.Settings);
             
             VNyanInterface.VNyanInterface.VNyanParameter.setVNyanParameterString(targetParameterName, baseSettings[settingName].ToString());
@@ -266,8 +267,8 @@ namespace JayoOBSPlugin
             string settingName = parseStringArgument(text2);
             string newValue = parseStringArgument(text3);
 
-            OBSWebsocketDotNet.Types.FilterSettings filterSet = obs.GetSourceFilter(sourceName, filterName);
-            JObject baseSettings = obs.GetSourceFilterDefaultSettings(filterSet.Kind)["defaultFilterSettings"].ToObject<JObject>();
+            OBSWebsocketDotNet.Types.FilterSettings filterSet = ObsManager.obs.GetSourceFilter(sourceName, filterName);
+            JObject baseSettings = ObsManager.obs.GetSourceFilterDefaultSettings(filterSet.Kind)["defaultFilterSettings"].ToObject<JObject>();
             baseSettings.Merge(filterSet.Settings);
 
             switch (baseSettings[settingName].Type)
@@ -286,7 +287,7 @@ namespace JayoOBSPlugin
                     break;
             }
 
-            obs.SetSourceFilterSettings(sourceName, filterName, baseSettings);
+            ObsManager.obs.SetSourceFilterSettings(sourceName, filterName, baseSettings);
         }
 
     }

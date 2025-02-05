@@ -1,6 +1,6 @@
 # Jayo's OBS Plugin for VNyan
 
-A VNyan Plugin that allows you to connect to OBS over the OBS WEbsocket API and use VNyan Parameters to control OBS through your VNyan node graphs. Change scenes, enable/disable Sources and Filters, mute and unmute Audio inputs, and more!
+A VNyan Plugin that allows you to connect to OBS over the OBS Websocket API and use VNyan Parameters to control OBS through your VNyan node graphs. Change scenes, enable/disable Sources and Filters, mute and unmute Audio inputs, and more!
 
 # Table of contents
 1. [Compatibility](#compatability)
@@ -18,11 +18,10 @@ A VNyan Plugin that allows you to connect to OBS over the OBS WEbsocket API and 
 At the current time, this plugin in only compatible with OBS Websocket Server 5.0 and above, which means that **OBS Version 28 or above is required for proper functioning of this plugin**
 
 ## Installation
-1. Grab the ZIP file from the [latest release](https://github.com/jayo-exe/JayoOBSPlugin/releases/latest) of the plugin.
-2. Extract the contents of the ZIP file _directly into your VNyan installation folder_.  This will add the plugin files to yor VNyan `Item\Assemblies` folder.
-4. Open the VNyan Settings window, go to the "Misc" section, and ensure that **Allow 3rd Party Mods/Plugins** is enabled. This is required for this plugin  (or any plugin) to function correctly, so if you've already got other plugins installed you can probably skip this step.
-5. Save your Node Graph and restart VNyan to allow the plugin and libraries to be loaded
-6. One VNyan loads, confirm that a button for the plugin now exists in your Plugins window!
+1. Ensure that in VNyan, the **Allow 3rd Party Mods/Plugins** setting is enabled. This is required for this plugin  (or any plugin) to function correctly!
+2. Grab the DLL file from the latest release of the plugin on [my itch.io store](https://jayo-exe.itch.io/obs-plugin-for-vnyan) 
+3. Copy the DLL file _directly into your VNyan installation folder's `Item\Assemblies` folder_.
+6. Start VNyan and confirm that a button for the plugin now exists in your Plugins window!
 
 ## Usage
 ### Connecting to OBS
@@ -45,29 +44,29 @@ These are the triggers that you can call in VNyan in order to control something 
 Arguments are passed to each trigger through the node's `text` sockets, with a common strucutre:
 - `text1` usually refers to a target (such as a scene or source name)
 - `text2` refers to a secondary/specific target where needed (i.e. the name of specific property on a specific source)
-- `text3` contains a value that will be in the operation (i.e. the value to set for a property)
+- `text3` contains a value that will be in the operation (i.e. the value to set for a property, or the name of a VNyan string parameter where a retrieved value should be stored)
 
-| Title                 | Trigger Name              | `text1` Contents                                         | `text2` Contents    | `text3` Contents       |
-|-----------------------|---------------------------|----------------------------------------------------------|---------------------|------------------------|
-| Change Scene          | `_xjo_switch_scene`       | The name of the Target Scene                             | [Unused]            | [Unused]               |
-| Fire a Hotkey         | `_xjo_fire_hotkey`        | The name of the Target Hotkey                            | [Unused]            | [Unused]               |
-| Mute Audio Input      | `_xjo_audio_mute`         | The name of the Audio Input                              | [Unused]            | [Unused]               |
-| Unmute Audio Input    | `_xjo_audio_unmute`       | The name of the Audio Input                              | [Unused]            | [Unused]               |
-| Set Input Volume      | `_xjo_audio_setvolume`    | Target Audio Input name                                  | [Unused]            | volume level from 0-1  |
-| Enable Scene Item     | `_xjo_item_enable`        | Scene and Source name i.e. `MySceneName;;MySourceName`   | [Unused]            | [Unused]               |
-| Disable Scene Item    | `_xjo_item_disable`       | Scene and Source name i.e. `MySceneName;;MySourceName`   | [Unused]            | [Unused]               |
-| Get Source Setting    | `_xjo_get_input_setting`  | Target Source/Input name                                 | Target setting name | [Unused]               |
-| Set Source Setting    | `_xjo_set_input_setting`  | Target Source/Input name                                 | Target setting name | new setting value      |
-| Enable Source Filter  | `_xjo_filter_enable`      | Source and Filter name i.e. `MySourceName;;MyFilterName` | [Unused]            | [Unused]               |
-| Disable Source Filter | `_xjo_filter_disable`     | Source and Filter name i.e. `MySourceName;;MyFilterName` | [Unused]            | [Unused]               |
-| Get Filter Setting    | `_xjo_get_filter_setting` | Source and Filter name i.e. `MySourceName;;MyFilterName` | Target setting name | [Unused]               |
-| Set Filter Setting    | `_xjo_set_filter_setting` | Source and Filter name i.e. `MySourceName;;MyFilterName` | Target setting name | new setting value      |
-| Start Virtual Cam     | `_xjo_vcam_start`         | [Unused]                                                 | [Unused]            | [Unused]               |
-| Stop Virtual Cam      | `_xjo_vcam_stop`          | [Unused]                                                 | [Unused]            | [Unused]               |
-| Start Recording       | `_xjo_record_start`       | [Unused]                                                 | [Unused]            | [Unused]               |
-| Stop Recording        | `_xjo_record_stop`        | [Unused]                                                 | [Unused]            | [Unused]               |
-| Start Streaming       | `_xjo_stream_start`       | [Unused]                                                 | [Unused]            | [Unused]               |
-| Stop Streaming        | `_xjo_stream_stop`        | [Unused]                                                 | [Unused]            | [Unused]               |
+| Title                 | Trigger Name              | `text1` Contents                                         | `text2` Contents    | `text3` Contents                |
+|-----------------------|---------------------------|----------------------------------------------------------|---------------------|---------------------------------|
+| Change Scene          | `_xjo_switch_scene`       | The name of the Target Scene                             | [Unused]            | [Unused]                        |
+| Fire a Hotkey         | `_xjo_fire_hotkey`        | The name of the Target Hotkey                            | [Unused]            | [Unused]                        |
+| Mute Audio Input      | `_xjo_audio_mute`         | The name of the Audio Input                              | [Unused]            | [Unused]                        |
+| Unmute Audio Input    | `_xjo_audio_unmute`       | The name of the Audio Input                              | [Unused]            | [Unused]                        |
+| Set Input Volume      | `_xjo_audio_setvolume`    | Target Audio Input name                                  | [Unused]            | volume level from 0-1           |
+| Enable Scene Item     | `_xjo_item_enable`        | Scene and Source name i.e. `MySceneName;;MySourceName`   | [Unused]            | [Unused]                        |
+| Disable Scene Item    | `_xjo_item_disable`       | Scene and Source name i.e. `MySceneName;;MySourceName`   | [Unused]            | [Unused]                        |
+| Get Source Setting    | `_xjo_get_input_setting`  | Target Source/Input name                                 | Target setting name | string parameter to store value |               |
+| Set Source Setting    | `_xjo_set_input_setting`  | Target Source/Input name                                 | Target setting name | new setting value               |
+| Enable Source Filter  | `_xjo_filter_enable`      | Source and Filter name i.e. `MySourceName;;MyFilterName` | [Unused]            | [Unused]                        |
+| Disable Source Filter | `_xjo_filter_disable`     | Source and Filter name i.e. `MySourceName;;MyFilterName` | [Unused]            | [Unused]                        |
+| Get Filter Setting    | `_xjo_get_filter_setting` | Source and Filter name i.e. `MySourceName;;MyFilterName` | Target setting name | string parameter to store value |             |
+| Set Filter Setting    | `_xjo_set_filter_setting` | Source and Filter name i.e. `MySourceName;;MyFilterName` | Target setting name | new setting value               |
+| Start Virtual Cam     | `_xjo_vcam_start`         | [Unused]                                                 | [Unused]            | [Unused]                        |
+| Stop Virtual Cam      | `_xjo_vcam_stop`          | [Unused]                                                 | [Unused]            | [Unused]                        |
+| Start Recording       | `_xjo_record_start`       | [Unused]                                                 | [Unused]            | [Unused]                        |
+| Stop Recording        | `_xjo_record_stop`        | [Unused]                                                 | [Unused]            | [Unused]                        |
+| Start Streaming       | `_xjo_stream_start`       | [Unused]                                                 | [Unused]            | [Unused]                        |
+| Stop Streaming        | `_xjo_stream_stop`        | [Unused]                                                 | [Unused]            | [Unused]                        |
 
 #### Outbound Triggers
 These are the Triggers that will be fired by the OBS plugin in response to certain things happening within OBS:
@@ -96,30 +95,14 @@ These are the Status Parameters that will automatically get set in response to c
 | Stream State           | `_xjo_streamactive` | The active state of the OBS Streaming                        | `1`             |
 
 #### Control Parameters (Legacy)
-**NOTE:** This parameter-controlled behaviour is considered deprecated; it still works, but will likely be removed in a future release.  Consider updating your existing graphs with the Inbound Trigger behaviour outlined above!
+**NOTE:** This parameter-controlled behaviour is considered deprecated; and is no longer documented as no new behaviour should be created this way. It still works, **but is scheduled to be removed in the next release**.  Update your existing graphs as soon as possible using the Inbound Trigger behaviour outlined above!
 These are the Control Parameters that can be set to make somethig happen in OBS:
-
-| Title                 | Parameter Name         | Description of Value                                     | Example Value                |
-|-----------------------|------------------------|----------------------------------------------------------|------------------------------|
-| Change Scene          | `_xjo_scenetoswitch`   | The name of the Scene to switch over to                  | `MySceneName`                |
-| Fire a Hotkey         | `_xjo_hotkeytofire`    | The name of the Hotkey to activate                       | `ObsBrowser.Refresh`         |
-| Mute Audio Input      | `_xjo_audiotomute`     | The name of the Audio Input to mute                      | `MyInputName`                |
-| Unmute Audio Input    | `_xjo_audiotounmute`   | The name of the Audio Input to unmute                    | `MyInputName`                |
-| Set Input Volume      | `_xjo_audiotoset`      | The name and desired volume of the audio input to adjust | `MyInputName;;0.69`          |
-| Enable Scene Item     | `_xjo_itemtoenable`    | The name of the Scene and Source of the item to enable   | `MySceneName;;MySourceName`  |
-| Disable Scene Item    | `_xjo_itemtodisable`   | The name of the Scene and Source of the item to disable  | `MySceneName;;MySourceName`  |
-| Enable Source Filter  | `_xjo_filtertoenable`  | The name of the Source and Filter to enable              | `MySourceName;;MyFilterName` |
-| Disable Source Filter | `_xjo_filtertodisable` | The name of the Source and Filter to disable             | `MySourceName;;MyFilterName` |
-| Start Virtual Cam     | `_xjo_startvcam`       | set to 1 to enable the OBS virtual camera                | `1`                          |
-| Stop Virtual Cam      | `_xjo_stopvcam`        | set to 1 to disable the OBS virtual camera               | `1`                          |
-| Start Recording       | `_xjo_startrecord`     | set to 1 to start recording                              | `1`                          |
-| Stop Recording        | `_xjo_stoprecord`      | set to 1 to stop recording                               | `1`                          |
-| Start Streaming       | `_xjo_startstream`     | set to 1 to start streaming                              | `1`                          |
-| Stop Streaming        | `_xjo_stopstream`      | set to 1 to stop streaming                               | `1`                          |
 
 ## Development
 (Almost) Everything you'll need to develop a fork of this plugin (or some other plugin based on this one)!  The main VS project contains all of the code for the plugin DLL, and the `dist` folder contains a `unitypackage` that can be dragged into a project to build and modify the UI and export the modified Custom Object.
 
-It's worth noting that per VNyan's requirements, this plugni in built under **Unity 2020.3.40f1** , so you'll need to develop on this version to maintain compatability with VNyan.
+It's worth noting that per VNyan's requirements, this plugin in built under **Unity 2020.3.40f1** , so you'll need to develop on this version to maintain compatability with VNyan.
 You'll also need the [VNyan SDK](https://suvidriel.itch.io/vnyan) imported into your project for it to function properly.
 Your Visual C# project will need to mave the paths to all dependencies updated to match their locations on your machine.  Most should point to Unity Engine libraries for the correct Engine version **2020.3.40f1**.
+
+This plugin also includes embedded assets!  The plugin GameObject that is exported from Unity during development needs to be included in the DLL build as an "Embedded Resource", with the same filename as the object in this repository.

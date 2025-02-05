@@ -16,9 +16,10 @@ namespace JayoOBSPlugin
     public class JayoObsPlugin : MonoBehaviour, VNyanInterface.IButtonClickedHandler
     {
         public GameObject windowPrefab;
-        public GameObject window;
+        
+        private static JayoObsPlugin _instance;
+        private GameObject window;
 
-        private ObsManager obsManager;
         private ObsTriggerHandler triggerHandler;
         private string[] sep;
 
@@ -31,7 +32,7 @@ namespace JayoOBSPlugin
         private Button DisconnectButton;
         private TMP_Text StatusText;
 
-        private string currentVersion = "v0.3.0";
+        private string currentVersion = "v0.4.0";
         private string repoName = "jayo-exe/JayoOBSPlugin";
         private string updateLink = "https://jayo-exe.itch.io/obs-plugin-for-vnyan";
 
@@ -41,7 +42,7 @@ namespace JayoOBSPlugin
 
         private void OnObsSceneChanged(object sender, OBSWebsocketDotNet.Types.Events.ProgramSceneChangedEventArgs e)
         {
-            Debug.Log("[OBS Plugin] Scene changed");
+            Logger.LogInfo("[OBS Plugin] Scene changed");
             setStringParam("_xjo_currentScene", e.SceneName);
             callTrigger("_xjo_sceneChanged", 0, 0, 0, "", "", "");
         }
@@ -61,7 +62,7 @@ namespace JayoOBSPlugin
         {
             setFloatParam("_xjo_recordActive", e.OutputState.IsActive ? 1 : 0);
             callTrigger(e.OutputState.IsActive ? "_xjo_recordStarted" : "_xjo_recordStopped", 0, 0, 0, "", "", "");
-            setFloatParam("_xjo_recordPaused", obsManager.obs.GetRecordStatus().IsRecordingPaused ? 1 : 0);
+            setFloatParam("_xjo_recordPaused", ObsManager.obs.GetRecordStatus().IsRecordingPaused ? 1 : 0);
         }
 
         private void OnObsStreamStateChanged(object sender, OBSWebsocketDotNet.Types.Events.StreamStateChangedEventArgs e)
@@ -75,17 +76,17 @@ namespace JayoOBSPlugin
             setStatusTitle("Connected To OBS");
             callTrigger("_xjo_obsConnected", 0, 0, 0, "", "", "");
 
-            string scene = obsManager.obs.GetCurrentProgramScene();
+            string scene = ObsManager.obs.GetCurrentProgramScene();
             setStringParam("_xjo_currentScene", scene);
 
-            OBSWebsocketDotNet.Types.VirtualCamStatus vCamActive = obsManager.obs.GetVirtualCamStatus();
+            OBSWebsocketDotNet.Types.VirtualCamStatus vCamActive = ObsManager.obs.GetVirtualCamStatus();
             setFloatParam("_xjo_vCamActive", vCamActive.IsActive ? 1 : 0);
 
-            OBSWebsocketDotNet.Types.RecordingStatus recordingActive = obsManager.obs.GetRecordStatus();
+            OBSWebsocketDotNet.Types.RecordingStatus recordingActive = ObsManager.obs.GetRecordStatus();
             setFloatParam("_xjo_recordActive", recordingActive.IsRecording ? 1 : 0);
             setFloatParam("_xjo_recordPaused", recordingActive.IsRecordingPaused ? 1 : 0);
 
-            OBSWebsocketDotNet.Types.OutputStatus streamActive = obsManager.obs.GetStreamStatus();
+            OBSWebsocketDotNet.Types.OutputStatus streamActive = ObsManager.obs.GetStreamStatus();
             setFloatParam("_xjo_streamActive", streamActive.IsActive ? 1 : 0);
         }
 
@@ -103,43 +104,41 @@ namespace JayoOBSPlugin
             deInitObs();
         }
 
-        /*
-        private void OnVNyanTrigger(string triggerValue)
-        {
-           setStringParam("_xjo_last_trigger", triggerValue);
-        }
-        */
-
         public void Awake()
         {
 
-            Debug.Log($"OBS is Awake!");
+            if (_instance != null && _instance != this)
+            {
+                Logger.LogWarning("Plugin instance already exists, destroying this duplicate.");
+                Destroy(gameObject);
+                return;
+            }
+            else
+            {
+                _instance = this;
+            }
+
+            Logger.LogInfo($"Plugin is Awake!");
             sep = new string[] { ";;" };
 
             updater = new PluginUpdater(repoName, currentVersion, updateLink);
             updater.OpenUrlRequested += (url) => MainThreadDispatcher.Enqueue(() => { Application.OpenURL(url); });
 
-            obsManager = gameObject.AddComponent<ObsManager>();
-
-            Debug.Log($"Loading Settings");
-            // Load settings
+            Logger.LogInfo($"Loading Settings");
             loadPluginSettings();
             updater.CheckForUpdates();
 
-            obsManager.obs.Connected += OnObsConnected;
-            obsManager.obs.Disconnected += OnObsDisconnected;
-            obsManager.obs.CurrentProgramSceneChanged += OnObsSceneChanged;
-            obsManager.obs.InputVolumeMeters += OnObsVolumeMeters;
-            obsManager.obs.VirtualcamStateChanged += OnObsVirtualcamStateChanged;
-            obsManager.obs.RecordStateChanged += OnObsRecordStateChanged;
-            obsManager.obs.StreamStateChanged += OnObsStreamStateChanged;
+            ObsManager.obs.Connected += OnObsConnected;
+            ObsManager.obs.Disconnected += OnObsDisconnected;
+            ObsManager.obs.CurrentProgramSceneChanged += OnObsSceneChanged;
+            ObsManager.obs.InputVolumeMeters += OnObsVolumeMeters;
+            ObsManager.obs.VirtualcamStateChanged += OnObsVirtualcamStateChanged;
+            ObsManager.obs.RecordStateChanged += OnObsRecordStateChanged;
+            ObsManager.obs.StreamStateChanged += OnObsStreamStateChanged;
 
-
-            ObsTriggerHandler.setObsSocket(obsManager.obs);
             triggerHandler = new ObsTriggerHandler();
             VNyanInterface.VNyanInterface.VNyanTrigger.registerTriggerListener(triggerHandler);
-            Debug.Log($"Beginning Plugin Setup");
-
+            Logger.LogInfo($"Beginning Plugin Setup");
 
             try
             {
@@ -148,18 +147,12 @@ namespace JayoOBSPlugin
             }
             catch (Exception e)
             {
-                Debug.Log(e.ToString());
+                Logger.LogError(e.ToString());
             }
-
-
 
             // Hide the window by default
             if (window != null)
             {
-
-                //triggerBrowserBody = window.transform.Find("Panel/Tabs/TriggerBrowser/ScrollView").gameObject;
-                //triggerBrowserContent = window.transform.Find("Panel/Tabs/TriggerBrowser/ScrollView/Viewport/Content").gameObject;
-                //triggerBrowserSessionText = window.transform.Find("Panel/Tabs/TriggerBrowser/SessionText").gameObject;
 
                 window.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
                 window.SetActive(false);
@@ -171,12 +164,11 @@ namespace JayoOBSPlugin
                 DisconnectButton = window.transform.Find("Panel/OBSServerInfo/DisconnectButton").GetComponent<Button>();
                 StatusText = window.transform.Find("Panel/StatusControls/Status Indicator").GetComponent<TMP_Text>();
 
-
                 setStatusTitle("Initializing");
 
                 try
                 {
-                    Debug.Log($"Preparing Plugin Window");
+                    Logger.LogInfo($"Preparing Plugin Window");
 
                     updater.PrepareUpdateUI(
                         window.transform.Find("Panel/VersionText").gameObject,
@@ -184,14 +176,14 @@ namespace JayoOBSPlugin
                         window.transform.Find("Panel/UpdateButton").gameObject
                     );
 
-                    AddressInput?.onValueChanged.AddListener((v) => { obsManager.serverAddress = v; });
-                    AddressInput?.SetTextWithoutNotify(obsManager.serverAddress);
+                    AddressInput.onValueChanged.AddListener((v) => { ObsManager.serverAddress = v; });
+                    AddressInput.SetTextWithoutNotify(ObsManager.serverAddress);
                     
-                    PortInput?.onValueChanged.AddListener((v) => { obsManager.serverPort = v; });
-                    PortInput?.SetTextWithoutNotify(obsManager.serverPort);
+                    PortInput.onValueChanged.AddListener((v) => { ObsManager.serverPort = v; });
+                    PortInput.SetTextWithoutNotify(ObsManager.serverPort);
                     
-                    PasswordInput?.onValueChanged.AddListener((v) => { obsManager.serverPassword = v; });
-                    PasswordInput?.SetTextWithoutNotify(obsManager.serverPassword);
+                    PasswordInput.onValueChanged.AddListener((v) => { ObsManager.serverPassword = v; });
+                    PasswordInput.SetTextWithoutNotify(ObsManager.serverPassword);
 
                     window.transform.Find("Panel/TitleBar/CloseButton").GetComponent<Button>().onClick.AddListener(() => { closePluginWindow(); });
                     ConnectButton.onClick.AddListener(() => {
@@ -204,7 +196,7 @@ namespace JayoOBSPlugin
                 }
                 catch (Exception e)
                 {
-                    Debug.Log($"Couldn't prepare Plugin Window: {e.Message}");
+                    Logger.LogError($"Couldn't prepare Plugin Window: {e.Message}");
                 }
 
                 try
@@ -217,8 +209,6 @@ namespace JayoOBSPlugin
                     deInitObs();
                 }
             }
-
-
         }
 
         private string getVNyanParameterString(string name) { return VNyanInterface.VNyanInterface.VNyanParameter.getVNyanParameterString(name); }
@@ -229,7 +219,7 @@ namespace JayoOBSPlugin
 
         private void Update()
         {
-            if (!obsManager.isConnected()) return;
+            if (!ObsManager.isConnected) return;
 
             //check for items to handle
             //scene to switch
@@ -237,14 +227,14 @@ namespace JayoOBSPlugin
             if (sceneToSwitch != "")
             {
                 setStringParam("_xjo_scenetoswitch", "");
-                obsManager.obs.SetCurrentProgramScene(sceneToSwitch);
+                ObsManager.obs.SetCurrentProgramScene(sceneToSwitch);
             }
             //Hotkey name to activate
             string hotkeyToFire = getVNyanParameterString("_xjo_hotkeytofire");
             if (hotkeyToFire != "")
             {
                 setStringParam("_xjo_hotkeytofire", "");
-                obsManager.obs.TriggerHotkeyByName(hotkeyToFire);
+                ObsManager.obs.TriggerHotkeyByName(hotkeyToFire);
             }
 
             //audio input to mute
@@ -252,7 +242,7 @@ namespace JayoOBSPlugin
             if (audioToMute != "")
             {
                 setStringParam("_xjo_audiotomute", "");
-                obsManager.obs.SetInputMute(audioToMute, true);
+                ObsManager.obs.SetInputMute(audioToMute, true);
             }
 
             //audio input to unmute
@@ -260,7 +250,7 @@ namespace JayoOBSPlugin
             if (audioToUnmute != "")
             {
                 setStringParam("_xjo_audiotounmute", "");
-                obsManager.obs.SetInputMute(audioToUnmute, false);
+                ObsManager.obs.SetInputMute(audioToUnmute, false);
 
             }
 
@@ -270,7 +260,7 @@ namespace JayoOBSPlugin
             {
                 setStringParam("_xjo_audiotoset", "");
                 string[] audioParts = audioToSet.Split(sep, StringSplitOptions.None);
-                obsManager.obs.SetInputVolume(audioParts[0], float.Parse(audioParts[1]));
+                ObsManager.obs.SetInputVolume(audioParts[0], float.Parse(audioParts[1]));
 
             }
 
@@ -280,8 +270,8 @@ namespace JayoOBSPlugin
             {
                 setStringParam("_xjo_itemtoenable", "");
                 string[] itemParts = itemToEnable.Split(sep, StringSplitOptions.None);
-                int itemId = obsManager.obs.GetSceneItemId(itemParts[0], itemParts[1], 0);
-                obsManager.obs.SetSceneItemEnabled(itemParts[0], itemId, true);
+                int itemId = ObsManager.obs.GetSceneItemId(itemParts[0], itemParts[1], 0);
+                ObsManager.obs.SetSceneItemEnabled(itemParts[0], itemId, true);
 
             }
 
@@ -291,8 +281,8 @@ namespace JayoOBSPlugin
             {
                 setStringParam("_xjo_itemtodisable", "");
                 string[] itemParts = itemToDisable.Split(sep, StringSplitOptions.None);
-                int itemId = obsManager.obs.GetSceneItemId(itemParts[0], itemParts[1], 0);
-                obsManager.obs.SetSceneItemEnabled(itemParts[0], itemId, false);
+                int itemId = ObsManager.obs.GetSceneItemId(itemParts[0], itemParts[1], 0);
+                ObsManager.obs.SetSceneItemEnabled(itemParts[0], itemId, false);
 
             }
 
@@ -302,7 +292,7 @@ namespace JayoOBSPlugin
             {
                 setStringParam("_xjo_filtertoenable", "");
                 string[] filterParts = filterToEnable.Split(sep, StringSplitOptions.None);
-                obsManager.obs.SetSourceFilterEnabled(filterParts[0], filterParts[1], true);
+                ObsManager.obs.SetSourceFilterEnabled(filterParts[0], filterParts[1], true);
 
             }
 
@@ -312,7 +302,7 @@ namespace JayoOBSPlugin
             {
                 setStringParam("_xjo_filtertodisable", "");
                 string[] filterParts = filterToDisable.Split(sep, StringSplitOptions.None);
-                obsManager.obs.SetSourceFilterEnabled(filterParts[0], filterParts[1], false);
+                ObsManager.obs.SetSourceFilterEnabled(filterParts[0], filterParts[1], false);
 
             }
 
@@ -321,7 +311,7 @@ namespace JayoOBSPlugin
             if (startVirtualCam == 1)
             {
                 setFloatParam("_xjo_startvcam", 0);
-                obsManager.obs.StartVirtualCam();
+                ObsManager.obs.StartVirtualCam();
 
             }
 
@@ -330,7 +320,7 @@ namespace JayoOBSPlugin
             if (stopVirtualCam == 1)
             {
                 setFloatParam("_xjo_stopvcam", 0);
-                obsManager.obs.StopVirtualCam();
+                ObsManager.obs.StopVirtualCam();
 
             }
 
@@ -339,7 +329,7 @@ namespace JayoOBSPlugin
             if (startRecord == 1)
             {
                 setFloatParam("_xjo_startrecord", 0);
-                obsManager.obs.StartRecord();
+                ObsManager.obs.StartRecord();
 
             }
 
@@ -348,7 +338,7 @@ namespace JayoOBSPlugin
             if (stopRecord == 1)
             {
                 setFloatParam("_xjo_stoprecord", 0);
-                obsManager.obs.StopRecord();
+                ObsManager.obs.StopRecord();
 
             }
 
@@ -357,7 +347,7 @@ namespace JayoOBSPlugin
             if (startStream == 1)
             {
                 setFloatParam("_xjo_startstream", 0);
-                obsManager.obs.StartStream();
+                ObsManager.obs.StartStream();
 
             }
 
@@ -366,7 +356,7 @@ namespace JayoOBSPlugin
             if (stopStream == 1)
             {
                 setFloatParam("_xjo_stopstream", 0);
-                obsManager.obs.StopStream();
+                ObsManager.obs.StopStream();
             }
 
             //Input to fetch settings for
@@ -376,7 +366,7 @@ namespace JayoOBSPlugin
                 setStringParam("_xjo_inputtofetch", "");
                 string[] inputParts = inputToFetch.Split(sep, StringSplitOptions.None);
 
-                OBSWebsocketDotNet.Types.InputSettings inputSet = obsManager.obs.GetInputSettings(inputParts[0]);
+                OBSWebsocketDotNet.Types.InputSettings inputSet = ObsManager.obs.GetInputSettings(inputParts[0]);
                 Debug.Log(inputSet.Settings.ToString());
                 setStringParam("_xjo_inputvalue", inputSet.Settings[inputParts[1]].ToString());
 
@@ -392,7 +382,7 @@ namespace JayoOBSPlugin
 
                 string[] inputParts = inputToUpdate.Split(sep, StringSplitOptions.None);
 
-                OBSWebsocketDotNet.Types.InputSettings inputSet = obsManager.obs.GetInputSettings(inputParts[0]);
+                OBSWebsocketDotNet.Types.InputSettings inputSet = ObsManager.obs.GetInputSettings(inputParts[0]);
 
                 setStringParam("_xjo_inputtype", inputSet.Settings[inputParts[1]].Type.ToString());
                 switch (inputSet.Settings[inputParts[1]].Type)
@@ -411,20 +401,20 @@ namespace JayoOBSPlugin
                         break;
                 }
 
-                obsManager.obs.SetInputSettings(inputSet);
+                ObsManager.obs.SetInputSettings(inputSet);
             }
         }
 
         public void initObs()
         {
-            if (obsManager.serverAddress == "" || Int32.Parse(obsManager.serverPort) <= 0)
+            if (ObsManager.serverAddress == "" || ObsManager.serverPort == null || Int32.Parse(ObsManager.serverPort) <= 0)
             {
                 setStatusTitle("OBS IP and Port required");
                 deInitObs();
                 return;
             }
             MainThreadDispatcher.Enqueue(() => {
-                obsManager.initObs();
+                ObsManager.initObs();
                 ConnectButton.gameObject.SetActive(false);
                 DisconnectButton.gameObject.SetActive(true);
             });
@@ -433,7 +423,7 @@ namespace JayoOBSPlugin
         public void deInitObs()
         {
             MainThreadDispatcher.Enqueue(() => {
-                obsManager.deInitObs();
+                ObsManager.deInitObs();
                 ConnectButton.gameObject.SetActive(true);
                 DisconnectButton.gameObject.SetActive(false);
             });
@@ -452,24 +442,24 @@ namespace JayoOBSPlugin
             if (settings != null)
             {
                 // Read string value
-                settings.TryGetValue("OBSServerAddress", out obsManager.serverAddress);
-                settings.TryGetValue("OBSServerPort", out obsManager.serverPort);
-                settings.TryGetValue("OBSServerPassword", out obsManager.serverPassword);
+                settings.TryGetValue("OBSServerAddress", out ObsManager.serverAddress);
+                settings.TryGetValue("OBSServerPort", out ObsManager.serverPort);
+                settings.TryGetValue("OBSServerPassword", out ObsManager.serverPassword);
             }
             else
             {
-                obsManager.serverAddress = "127.0.0.1";
-                obsManager.serverPort = "4455";
-                obsManager.serverPassword = "";
+                ObsManager.serverAddress = "127.0.0.1";
+                ObsManager.serverPort = "4455";
+                ObsManager.serverPassword = "";
             }
         }
 
         public void savePluginSettings()
         {
             Dictionary<string, string> settings = new Dictionary<string, string>();
-            settings["OBSServerAddress"] = obsManager.serverAddress;
-            settings["OBSServerPort"] = obsManager.serverPort;
-            settings["OBSServerPassword"] = obsManager.serverPassword;
+            settings["OBSServerAddress"] = ObsManager.serverAddress;
+            settings["OBSServerPort"] = ObsManager.serverPort;
+            settings["OBSServerPassword"] = ObsManager.serverPassword;
 
             VNyanInterface.VNyanInterface.VNyanSettings.saveSettings("JayoOBSPlugin.cfg", settings);
         }
@@ -522,174 +512,5 @@ namespace JayoOBSPlugin
                 VNyanInterface.VNyanInterface.VNyanTrigger.callTrigger(triggerName, value1, value2, value3, text1, text2, text3);
             });
         }
-
-        public void callSimpleTrigger(string triggerName)
-        {
-            MainThreadDispatcher.Enqueue(() =>
-            {
-                callTrigger(triggerName, 0, 0, 0, "", "", "");
-            });
-        }
-
-        public Dictionary<string, Dictionary<string, string>> GetTriggerList()
-        {
-            return new Dictionary<string, Dictionary<string, string>>
-            {
-                {
-
-                    "_xjo_scenetoswitch",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Change Scene"},
-                        {"description", "The name of the Scene to switch over to"},
-                        {"example", "MySceneName"},
-                    }
-                },
-                {
-
-                   "_xjo_hotkeytofire",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Fire a Hotkey"},
-                        {"description", "The name of the Hotkey to activate"},
-                        {"example", "ObsBrowser.Refresh"},
-                    }
-                },
-                {
-
-                    "_xjo_audiotomute",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Mute Audio Input"},
-                        {"description", "The name of the Audio Input to mute"},
-                        {"example", "MyInputName"},
-                    }
-                },
-                {
-
-                    "_xjo_audiotounmute",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Unmute Autdio Input"},
-                        {"description", "The name of the Audio Input to unmute"},
-                        {"example", "MyInputName"},
-                    }
-                },
-                {
-
-                    "_xjo_audiotoset",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Set Input Volume"},
-                        {"description", "The name and desired volume of the audio input to adjust"},
-                        {"example", "MyInputName;;69"},
-                    }
-                },
-                {
-
-                    "_xjo_itemtoenable",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Enable Scene Item"},
-                        {"description", "The name of the Scene and Source of the item to enable"},
-                        {"example", "MySceneName;;MySourceName"},
-                    }
-                },
-                {
-
-                    "_xjo_itemtodisable",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Disable Scene Item"},
-                        {"description", "The name of the Scene and Source of the item to disable"},
-                        {"example", "MySceneName;;MySourceName"},
-                    }
-                },
-                {
-
-                    "_xjo_filtertoenable",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Enable Source Filter"},
-                        {"description", "The name of the Source and Filter to enable"},
-                        {"example", "MySourceName::MyFilterName"},
-                    }
-                },
-                {
-
-                    "_xjo_filtertodisable",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Disable Source Filter"},
-                        {"description", "The name of the Source and Filter to disable"},
-                        {"example", "MySourceName::MyFilterName"},
-                    }
-                },
-                {
-
-                    "_xjo_startvcam",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Enable Virtual Cam"},
-                        {"description", "set to 1 to enable the OBS virtual camera"},
-                        {"example", "1"},
-                    }
-                },
-                {
-
-                    "_xjo_stopvcam",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Disable Virtual Cam"},
-                        {"description", "set to 1 to disable the OBS virtual camera"},
-                        {"example", "1"},
-                    }
-                },
-                {
-
-                    "_xjo_startrecord",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Enable Recording"},
-                        {"description", "set to 1 to start recording"},
-                        {"example", "1"},
-                    }
-                },
-                {
-
-                    "_xjo_stoprecord",
-                    new Dictionary<string, string>
-                    {
-                         {"name", "Disable Recording"},
-                        {"description", "set to 1 to stop recording"},
-                        {"example", "1"},
-                        {"example", "1"},
-                    }
-                },
-                {
-
-                    "_xjo_startstream",
-                    new Dictionary<string, string>
-                    {
-                        {"name", "Enable Streaming"},
-                        {"description", "set to 1 to start streaming"},
-                        {"example", "1"},
-                    }
-                },
-                {
-
-                    "_xjo_stopstream",
-                    new Dictionary<string, string>
-                    {
-                         {"name", "Disable Streaming"},
-                        {"description", "set to 1 to stop streaming"},
-                        {"example", "1"},
-                        {"example", "1"},
-                    }
-                },
-            };
-
-        }
-
     }
 }

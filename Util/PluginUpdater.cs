@@ -43,7 +43,7 @@ namespace JayoOBSPlugin.Util
             }
             catch (Exception e)
             {
-                Debug.Log($"Couldn't check for updates: {e.Message}");
+                Logger.LogInfo($"Couldn't check for updates: {e.Message}");
             }
         }
 
