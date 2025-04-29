@@ -57,6 +57,8 @@
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
 		<Exec Command="copy &quot;$(TargetDir)JayoOBSPlugin.dll&quot; &quot;$(TargetDir)..\..\..\..\..\..\..\VNyanPlugins\Assets\JayoObsPlugin\Plugins&quot; /Y" />
+		<Exec Command="copy &quot;$(TargetDir)JayoOBSPlugin.dll&quot; &quot;E:\VNyan\Items\Assemblies&quot; /Y" />
+		<Exec Command="copy &quot;$(TargetDir)JayoOBSPlugin.pdb&quot; &quot;E:\VNyan\Items\Assemblies&quot; /Y" />
 	</Target>
 
 </Project>

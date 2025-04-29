@@ -32,7 +32,7 @@ namespace JayoOBSPlugin
         private Button DisconnectButton;
         private TMP_Text StatusText;
 
-        private string currentVersion = "v0.4.0";
+        private string currentVersion = "v0.4.1";
         private string repoName = "jayo-exe/JayoOBSPlugin";
         private string updateLink = "https://jayo-exe.itch.io/obs-plugin-for-vnyan";
 
